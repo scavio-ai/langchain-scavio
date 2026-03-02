@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "langchain-scavio"
-version = "0.1.0"
+version = "2.0"
 description = "LangChain integration for Scavio Search API -- real-time web search with knowledge graphs, multi-platform support"
 authors = ["Scavio <dev@scavio.dev>"]
 readme = "README.md"
