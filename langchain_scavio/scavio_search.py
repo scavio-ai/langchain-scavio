@@ -266,7 +266,11 @@ class ScavioSearch(BaseTool):  # type: ignore[override]
                 nfpr=self.nfpr,
             )
             return self._process_response(
-                raw, query, params["search_type"], params["country_code"], params["language"]
+                raw,
+                query,
+                params["search_type"],
+                params["country_code"],
+                params["language"],
             )
         except ToolException:
             raise
@@ -301,7 +305,11 @@ class ScavioSearch(BaseTool):  # type: ignore[override]
                 nfpr=self.nfpr,
             )
             return self._process_response(
-                raw, query, params["search_type"], params["country_code"], params["language"]
+                raw,
+                query,
+                params["search_type"],
+                params["country_code"],
+                params["language"],
             )
         except ToolException:
             raise
