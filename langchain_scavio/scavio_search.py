@@ -203,7 +203,7 @@ class ScavioSearch(BaseTool):  # type: ignore[override]
     page: Optional[int] = None
 
     api_wrapper: ScavioSearchAPIWrapper = Field(
-        default_factory=ScavioSearchAPIWrapper
+        default_factory=ScavioSearchAPIWrapper  # type: ignore[arg-type]
     )
 
     def __init__(self, **kwargs: Any) -> None:
