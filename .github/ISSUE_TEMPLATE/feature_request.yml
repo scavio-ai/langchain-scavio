@@ -1,0 +1,18 @@
+name: Feature Request
+description: Suggest a feature for langchain-scavio
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What feature would you like and why?
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: How would you use this feature?
+    validations:
+      required: false

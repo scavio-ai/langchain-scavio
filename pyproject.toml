@@ -5,11 +5,22 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "langchain-scavio"
 version = "0.1.0"
-description = "LangChain integration for Scavio Search API"
+description = "LangChain integration for Scavio Search API -- real-time web search with knowledge graphs, multi-platform support"
 authors = ["Scavio <dev@scavio.dev>"]
 readme = "README.md"
-repository = "https://github.com/scavio/langchain-scavio"
+homepage = "https://scavio.dev"
+repository = "https://github.com/scavio-ai/langchain-scavio"
+documentation = "https://scavio.dev/docs/langchain"
 license = "MIT"
+keywords = ["langchain", "search", "ai", "agents", "web-search", "knowledge-graph", "tavily-alternative", "langgraph", "serp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Framework :: Pydantic :: 2",
+    "Typing :: Typed",
+]
 include = ["langchain_scavio/py.typed"]
 
 [tool.poetry.dependencies]

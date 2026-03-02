@@ -1,6 +1,14 @@
 # langchain-scavio
 
-LangChain integration for the [Scavio Search API](https://scavio.dev). Provides real-time web search with structured SERP data including knowledge graphs, "People Also Ask", and related searches.
+[![PyPI version](https://img.shields.io/pypi/v/langchain-scavio.svg)](https://pypi.org/project/langchain-scavio/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/langchain-scavio.svg)](https://pypi.org/project/langchain-scavio/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![LangChain](https://img.shields.io/badge/LangChain-integration-blueviolet)](https://python.langchain.com/)
+
+LangChain integration for the [Scavio Search API](https://scavio.dev). Real-time web search with structured SERP data including knowledge graphs, "People Also Ask", related searches, and more.
+
+**Why Scavio?** Multi-platform search (Google, Amazon, YouTube, Walmart), structured knowledge graph data, and competitive pricing at $0.005/credit.
 
 ## Installation
 
@@ -10,13 +18,39 @@ pip install langchain-scavio
 
 ## Quick Start
 
+Get your API key at [dashboard.scavio.dev](https://dashboard.scavio.dev/).
+
 ```python
+import os
 from langchain_scavio import ScavioSearch
 
-# Uses SCAVIO_API_KEY environment variable
-tool = ScavioSearch()
+os.environ["SCAVIO_API_KEY"] = "sk_live_..."
 
+tool = ScavioSearch()
 result = tool.invoke({"query": "best python web frameworks 2026"})
+```
+
+## Use with LangGraph
+
+```python
+from langgraph.prebuilt import create_react_agent
+from langchain_openai import ChatOpenAI
+from langchain_scavio import ScavioSearch
+
+agent = create_react_agent(
+    ChatOpenAI(model="gpt-4o"),
+    tools=[ScavioSearch(max_results=5)],
+)
+
+response = agent.invoke({
+    "messages": [{"role": "user", "content": "What are the latest AI regulations in the EU?"}]
+})
+```
+
+## Async Support
+
+```python
+result = await tool.ainvoke({"query": "async python frameworks"})
 ```
 
 ## Configuration
@@ -51,41 +85,6 @@ tool = ScavioSearch(
 )
 ```
 
-## Agent Usage
-
-```python
-from langchain.agents import create_agent
-from langchain_openai import ChatOpenAI
-from langchain_scavio import ScavioSearch
-
-tool = ScavioSearch(max_results=5)
-
-agent = create_agent(
-    model=ChatOpenAI(model="gpt-4o"),
-    tools=[tool],
-    system_prompt="You are a research assistant with web search access.",
-)
-
-response = agent.invoke({
-    "messages": [{"role": "user", "content": "What are the latest AI regulations in the EU?"}]
-})
-```
-
-## LangGraph
-
-```python
-from langgraph.prebuilt import ToolNode
-from langchain_scavio import ScavioSearch
-
-tool_node = ToolNode([ScavioSearch()])
-```
-
-## Async
-
-```python
-result = await tool.ainvoke({"query": "async python frameworks"})
-```
-
 ## Agent-Controllable Parameters
 
 The LLM can dynamically set these at invocation time (overrides init defaults):
@@ -111,7 +110,7 @@ Two-layer design:
 
 ```
 ScavioBaseAPIWrapper          # Auth, headers, sync/async HTTP POST
-  └── ScavioSearchAPIWrapper  # _build_url() -> /api/v1/google
+  +-- ScavioSearchAPIWrapper  # _build_url() -> /api/v1/google
 
 ScavioSearch(BaseTool)        # LangChain tool wrapping ScavioSearchAPIWrapper
 ```
@@ -120,24 +119,19 @@ ScavioSearch(BaseTool)        # LangChain tool wrapping ScavioSearchAPIWrapper
 - **`ScavioSearchAPIWrapper`** -- thin subclass targeting the Google Search endpoint.
 - **`ScavioSearch`** -- LangChain `BaseTool` with init-only params (developer-controlled) and an `args_schema` for LLM-controllable params.
 
-## Extending
+## Migrating from Tavily
 
-To add a new Scavio endpoint (e.g. YouTube):
+Switching from `langchain-tavily` requires minimal changes:
 
-```python
-# langchain_scavio/_utilities.py
-class ScavioYouTubeAPIWrapper(ScavioBaseAPIWrapper):
-    def _build_url(self) -> str:
-        base = self.api_base_url or SCAVIO_API_URL
-        return f"{base}/api/v1/youtube"
+```diff
+- from langchain_tavily import TavilySearch
++ from langchain_scavio import ScavioSearch
 
-# langchain_scavio/scavio_youtube.py
-class ScavioYouTube(BaseTool):
-    api_wrapper: ScavioYouTubeAPIWrapper = Field(
-        default_factory=ScavioYouTubeAPIWrapper
-    )
-    # ... define args_schema, _run, _arun
+- tool = TavilySearch(max_results=5)
++ tool = ScavioSearch(max_results=5)
 ```
+
+See the full [migration guide](.docs/tavily-migration.md) for parameter mapping and feature comparison.
 
 ## License
 
