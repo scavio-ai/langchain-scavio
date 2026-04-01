@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
 import responses
-from langchain_core.tools import ToolException
 
 from langchain_scavio import ScavioSearch
 from langchain_scavio._utilities import SCAVIO_API_URL
@@ -235,8 +233,6 @@ class TestAsync:
 
 class TestInputSchema:
     def test_schema_has_expected_fields(self) -> None:
-        schema = ScavioSearch.model_json_schema()
-        # The tool's args_schema should expose the right properties
         tool = ScavioSearch(scavio_api_key=MOCK_API_KEY)
         input_schema = tool.get_input_schema().model_json_schema()
         props = input_schema["properties"]

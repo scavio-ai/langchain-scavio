@@ -7,6 +7,13 @@ from typing import Any
 import pytest
 
 from langchain_scavio import ScavioSearch
+from langchain_scavio.scavio_amazon import ScavioAmazonProduct, ScavioAmazonSearch
+from langchain_scavio.scavio_walmart import ScavioWalmartProduct, ScavioWalmartSearch
+from langchain_scavio.scavio_youtube import (
+    ScavioYouTubeMetadata,
+    ScavioYouTubeSearch,
+    ScavioYouTubeTranscript,
+)
 
 MOCK_API_KEY = "sk_live_test_key_12345"
 
@@ -57,8 +64,10 @@ def make_full_response(**overrides: Any) -> dict[str, Any]:
                 },
             ],
             "related_queries": [
-                {"title": "test subject reviews", "position": 0, "link": "test subject reviews"},
-                {"title": "test subject alternatives", "position": 1, "link": "test subject alternatives"},
+                {"title": "test subject reviews", "position": 0,
+                 "link": "test subject reviews"},
+                {"title": "test subject alternatives", "position": 1,
+                 "link": "test subject alternatives"},
             ],
         }
     )
@@ -89,3 +98,215 @@ def full_tool() -> ScavioSearch:
         include_questions=True,
         include_related=True,
     )
+
+
+def make_amazon_search_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock Amazon search API response (actual structure: data.products)."""
+    products = [
+        {
+            "asin": f"B00000{i:04d}",
+            "title": f"Product {i}",
+            "url": f"/dp/B00000{i:04d}",
+            "price": 9.99 + i,
+            "currency": "USD",
+            "rating": 4.5,
+            "reviews_count": 100 + i,
+            "url_image": f"https://images.amazon.com/images/P/B00000{i:04d}.jpg",
+            "is_prime": True,
+            "best_seller": i == 1,
+            "is_sponsored": False,
+        }
+        for i in range(1, 11)
+    ]
+    base: dict[str, Any] = {
+        "data": {"page": 1, "html": "", "products": products},
+        "response_time": 0.5,
+        "credits_used": 1,
+        "credits_remaining": 999,
+    }
+    base.update(overrides)
+    return base
+
+
+def make_amazon_product_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock Amazon product detail API response."""
+    base: dict[str, Any] = {
+        "data": {
+            "asin": "B001234567",
+            "title": "Test Product",
+            "price": 29.99,
+            "currency": "USD",
+            "rating": 4.3,
+            "reviews_count": 512,
+            "url_image": "https://images.amazon.com/images/P/B001234567.jpg",
+            "is_prime": True,
+            "best_seller": False,
+        },
+        "response_time": 0.4,
+        "credits_used": 1,
+        "credits_remaining": 999,
+    }
+    base.update(overrides)
+    return base
+
+
+def make_walmart_search_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock Walmart search API response (actual structure: data.products)."""
+    products = [
+        {
+            "id": f"100000{i}",
+            "title": f"Walmart Product {i}",
+            "url": f"/ip/product-{i}/100000{i}",
+            "price": 7.99 + i,
+            "currency": "USD",
+            "rating": 4.2,
+            "rating_count": 50 + i,
+            "image": f"https://i5.walmartimages.com/product-{i}.jpg",
+            "fulfillment": {"delivery": True, "free_shipping": True},
+            "out_of_stock": False,
+        }
+        for i in range(1, 11)
+    ]
+    base: dict[str, Any] = {
+        "data": {"page": 1, "html": "", "products": products},
+        "response_time": 0.45,
+        "credits_used": 1,
+        "credits_remaining": 999,
+    }
+    base.update(overrides)
+    return base
+
+
+def make_walmart_product_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock Walmart product detail API response."""
+    base: dict[str, Any] = {
+        "data": {
+            "id": "987654321",
+            "title": "Test Walmart Product",
+            "price": 19.99,
+            "currency": "USD",
+            "rating": 4.1,
+            "rating_count": 203,
+            "images": ["https://i5.walmartimages.com/test-product.jpg"],
+            "fulfillment": {"delivery": True, "free_shipping": False},
+            "out_of_stock": False,
+        },
+        "response_time": 0.38,
+        "credits_used": 1,
+        "credits_remaining": 999,
+    }
+    base.update(overrides)
+    return base
+
+
+def make_youtube_search_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock YouTube search API response (actual structure: data.results)."""
+    results = [
+        {
+            "videoId": f"vid{i:08d}",
+            "title": {"runs": [{"text": f"Test Video {i}"}]},
+            "longBylineText": {"runs": [{"text": "Test Channel"}]},
+            "thumbnail": {
+                "thumbnails": [
+                    {"url": f"https://i.ytimg.com/vi/vid{i:08d}/hqdefault.jpg"}
+                ]
+            },
+        }
+        for i in range(1, 11)
+    ]
+    base: dict[str, Any] = {
+        "data": {"results": results},
+        "response_time": 0.42,
+        "credits_used": 1,
+        "credits_remaining": 999,
+    }
+    base.update(overrides)
+    return base
+
+
+def make_youtube_metadata_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock YouTube metadata API response."""
+    base: dict[str, Any] = {
+        "data": {
+            "title": "Test Video Title",
+            "description": "A test video description.",
+            "upload_date": "2026-01-15",
+            "duration": 330,
+            "view_count": 50000,
+            "like_count": 1200,
+            "comment_count": 340,
+            "categories": ["Education"],
+            "tags": ["python", "tutorial"],
+            "channel_id": "UCtest123",
+            "channel_url": "https://www.youtube.com/channel/UCtest123",
+            "uploader": "Test Channel",
+            "age_limit": 0,
+        },
+        "response_time": 0.35,
+        "credits_used": 1,
+        "credits_remaining": 999,
+    }
+    base.update(overrides)
+    return base
+
+
+def make_youtube_transcript_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock YouTube transcript API response (actual: data.transcripts)."""
+    transcripts = [
+        {
+            "text": f"Transcript segment {i}.",
+            "start": float(i * 5),
+            "duration": 5.0,
+        }
+        for i in range(30)
+    ]
+    base: dict[str, Any] = {
+        "data": {"text": "", "transcripts": transcripts},
+        "response_time": 0.6,
+        "credits_used": 1,
+        "credits_remaining": 999,
+    }
+    base.update(overrides)
+    return base
+
+
+@pytest.fixture()
+def amazon_search_tool() -> ScavioAmazonSearch:
+    """ScavioAmazonSearch with default settings and a test API key."""
+    return ScavioAmazonSearch(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def amazon_product_tool() -> ScavioAmazonProduct:
+    """ScavioAmazonProduct with default settings and a test API key."""
+    return ScavioAmazonProduct(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def walmart_search_tool() -> ScavioWalmartSearch:
+    """ScavioWalmartSearch with default settings and a test API key."""
+    return ScavioWalmartSearch(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def walmart_product_tool() -> ScavioWalmartProduct:
+    """ScavioWalmartProduct with default settings and a test API key."""
+    return ScavioWalmartProduct(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def youtube_search_tool() -> ScavioYouTubeSearch:
+    """ScavioYouTubeSearch with default settings and a test API key."""
+    return ScavioYouTubeSearch(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def youtube_metadata_tool() -> ScavioYouTubeMetadata:
+    """ScavioYouTubeMetadata with default settings and a test API key."""
+    return ScavioYouTubeMetadata(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def youtube_transcript_tool() -> ScavioYouTubeTranscript:
+    """ScavioYouTubeTranscript with default settings and a test API key."""
+    return ScavioYouTubeTranscript(scavio_api_key=MOCK_API_KEY)

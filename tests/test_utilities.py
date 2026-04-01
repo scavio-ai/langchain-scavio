@@ -8,7 +8,17 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 import responses
 
-from langchain_scavio._utilities import SCAVIO_API_URL, ScavioSearchAPIWrapper
+from langchain_scavio._utilities import (
+    SCAVIO_API_URL,
+    ScavioAmazonProductAPIWrapper,
+    ScavioAmazonSearchAPIWrapper,
+    ScavioSearchAPIWrapper,
+    ScavioWalmartProductAPIWrapper,
+    ScavioWalmartSearchAPIWrapper,
+    ScavioYouTubeMetadataAPIWrapper,
+    ScavioYouTubeSearchAPIWrapper,
+    ScavioYouTubeTranscriptAPIWrapper,
+)
 
 from .conftest import MOCK_API_KEY, make_error_response, make_light_response
 
@@ -125,6 +135,54 @@ class TestSyncRequests:
         wrapper = ScavioSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
         with pytest.raises(ValueError, match="Insufficient credits"):
             wrapper.raw_results(query="test")
+
+
+class TestWrapperURLs:
+    def test_search_wrapper_default_url(self) -> None:
+        w = ScavioSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/google"
+
+    def test_amazon_search_wrapper_url(self) -> None:
+        w = ScavioAmazonSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/amazon/search"
+
+    def test_amazon_product_wrapper_url(self) -> None:
+        w = ScavioAmazonProductAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/amazon/product"
+
+    def test_walmart_search_wrapper_url(self) -> None:
+        w = ScavioWalmartSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/walmart/search"
+
+    def test_walmart_product_wrapper_url(self) -> None:
+        w = ScavioWalmartProductAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/walmart/product"
+
+    def test_youtube_search_wrapper_url(self) -> None:
+        w = ScavioYouTubeSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/youtube/search"
+
+    def test_youtube_metadata_wrapper_url(self) -> None:
+        w = ScavioYouTubeMetadataAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/youtube/metadata"
+
+    def test_youtube_transcript_wrapper_url(self) -> None:
+        w = ScavioYouTubeTranscriptAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/youtube/transcript"
+
+    def test_custom_base_url_propagates_to_all_wrappers(self) -> None:
+        custom = "https://custom.api.dev"
+        for cls in (
+            ScavioAmazonSearchAPIWrapper,
+            ScavioAmazonProductAPIWrapper,
+            ScavioWalmartSearchAPIWrapper,
+            ScavioWalmartProductAPIWrapper,
+            ScavioYouTubeSearchAPIWrapper,
+            ScavioYouTubeMetadataAPIWrapper,
+            ScavioYouTubeTranscriptAPIWrapper,
+        ):
+            w = cls(scavio_api_key=MOCK_API_KEY, api_base_url=custom)
+            assert w._build_url().startswith(custom)
 
 
 class TestAsyncRequests:

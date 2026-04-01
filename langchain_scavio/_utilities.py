@@ -114,3 +114,59 @@ class ScavioSearchAPIWrapper(ScavioBaseAPIWrapper):
     def _build_url(self) -> str:
         base = self.api_base_url or SCAVIO_API_URL
         return f"{base}/api/v1/google"
+
+
+class ScavioAmazonSearchAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Amazon Search endpoint (POST /api/v1/amazon/search)."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/amazon/search"
+
+
+class ScavioAmazonProductAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Amazon Product endpoint (POST /api/v1/amazon/product)."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/amazon/product"
+
+
+class ScavioWalmartSearchAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Walmart Search endpoint (POST /api/v1/walmart/search)."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/walmart/search"
+
+
+class ScavioWalmartProductAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Walmart Product endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/walmart/product"
+
+
+class ScavioYouTubeSearchAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio YouTube Search endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/search"
+
+
+class ScavioYouTubeMetadataAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio YouTube Metadata endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/metadata"
+
+
+class ScavioYouTubeTranscriptAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio YouTube Transcript endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/transcript"
