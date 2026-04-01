@@ -6,15 +6,28 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-integration-blueviolet)](https://python.langchain.com/)
 
-LangChain integration for the [Scavio Search API](https://scavio.dev). Real-time web search with structured SERP data including knowledge graphs, "People Also Ask", related searches, and more.
+LangChain integration for the [Scavio Search API](https://scavio.dev). Real-time structured data from Google, Amazon, Walmart, and YouTube — all through a single package.
 
-**Why Scavio?** Multi-platform search (Google, Amazon, YouTube, Walmart), structured knowledge graph data, and competitive pricing at $0.005/credit.
+**Why Scavio?** Multi-platform coverage, structured knowledge graph data, and competitive pricing at $0.005/credit.
 
 ## Installation
 
 ```bash
 pip install langchain-scavio
 ```
+
+## Tools
+
+| Tool | Description |
+|------|-------------|
+| `ScavioSearch` | Google web search with knowledge graphs, PAA questions, news |
+| `ScavioAmazonSearch` | Search Amazon product listings |
+| `ScavioAmazonProduct` | Fetch full details for an Amazon product by ASIN |
+| `ScavioWalmartSearch` | Search Walmart product listings |
+| `ScavioWalmartProduct` | Fetch full details for a Walmart product by ID |
+| `ScavioYouTubeSearch` | Search YouTube videos with duration/date/type filters |
+| `ScavioYouTubeMetadata` | Fetch metadata for a YouTube video by video ID |
+| `ScavioYouTubeTranscript` | Fetch the transcript of a YouTube video |
 
 ## Quick Start
 
@@ -35,19 +48,33 @@ result = tool.invoke({"query": "best python web frameworks 2026"})
 ```python
 from langgraph.prebuilt import create_react_agent
 from langchain_openai import ChatOpenAI
-from langchain_scavio import ScavioSearch
+from langchain_scavio import (
+    ScavioSearch,
+    ScavioAmazonSearch, ScavioAmazonProduct,
+    ScavioWalmartSearch,
+    ScavioYouTubeSearch, ScavioYouTubeTranscript,
+)
 
 agent = create_react_agent(
     ChatOpenAI(model="gpt-4o"),
-    tools=[ScavioSearch(max_results=5)],
+    tools=[
+        ScavioSearch(max_results=5),
+        ScavioAmazonSearch(max_results=5),
+        ScavioAmazonProduct(),
+        ScavioWalmartSearch(max_results=5),
+        ScavioYouTubeSearch(max_results=5),
+        ScavioYouTubeTranscript(),
+    ],
 )
 
 response = agent.invoke({
-    "messages": [{"role": "user", "content": "What are the latest AI regulations in the EU?"}]
+    "messages": [{"role": "user", "content": "Find me a Python book on Amazon under $30"}]
 })
 ```
 
 ## Async Support
+
+All tools support async invocation:
 
 ```python
 result = await tool.ainvoke({"query": "async python frameworks"})
@@ -55,48 +82,123 @@ result = await tool.ainvoke({"query": "async python frameworks"})
 
 ## Configuration
 
+### Google Search
+
 ```python
+from langchain_scavio import ScavioSearch
+
 tool = ScavioSearch(
-    scavio_api_key="sk_live_...",       # or set SCAVIO_API_KEY env var
-    max_results=5,                       # truncate results (default: 5)
+    scavio_api_key="sk_live_...",       # or SCAVIO_API_KEY env var
+    max_results=5,
     light_request=None,                  # None=light/1 credit, False=full/2 credits
-    nfpr=False,                          # disable autocorrection (default: False)
-
-    # Response field filters (include/exclude sections from results)
-    include_knowledge_graph=True,        # default: True
-    include_questions=True,              # "people also ask" (default: True)
-    include_related=False,               # related queries + searches (default: False)
-    include_maps_results=False,          # maps results (default: False)
-    include_ai_overviews=False,          # AI overviews (default: False)
-    include_news_results=False,          # news results (default: False)
-    include_local_results=False,         # local results (default: False)
-    include_top_stories=False,           # top stories (default: False)
-    include_hotel_results=False,         # hotel results (default: False)
-    include_shopping_ads=False,          # shopping ads (default: False)
-    include_top_ads=False,               # top ads (default: False)
-    include_bottom_ads=False,            # bottom ads (default: False)
-
-    # Default search parameters (LLM can override per-query)
-    country_code="us",                   # ISO 3166-1 alpha-2
-    language="en",                       # ISO 639-1
+    include_knowledge_graph=True,
+    include_questions=True,
+    include_related=False,
+    country_code="us",
+    language="en",
     search_type="classic",               # classic|news|maps|images|lens
-    device="desktop",                    # desktop|mobile
-    page=1,                              # result page number
+    device="desktop",
 )
+```
+
+### Amazon
+
+```python
+from langchain_scavio import ScavioAmazonSearch, ScavioAmazonProduct
+
+search = ScavioAmazonSearch(
+    max_results=5,
+    pages=1,                             # number of result pages to fetch
+    domain="com",                        # com|co.uk|de|fr|co.jp|ca|...
+)
+
+product = ScavioAmazonProduct()
+result = product.invoke({"query": "B08N5WRWNW"})  # query = ASIN
+```
+
+### Walmart
+
+```python
+from langchain_scavio import ScavioWalmartSearch, ScavioWalmartProduct
+
+search = ScavioWalmartSearch(max_results=5)
+result = search.invoke({
+    "query": "air fryer",
+    "sort_by": "price_low",              # best_match|price_low|price_high|best_seller
+    "max_price": 5000,                   # in cents
+    "fulfillment_speed": "2_days",       # today|tomorrow|2_days|anytime
+})
+
+product = ScavioWalmartProduct()
+result = product.invoke({"product_id": "123456789"})
+```
+
+### YouTube
+
+```python
+from langchain_scavio import ScavioYouTubeSearch, ScavioYouTubeMetadata, ScavioYouTubeTranscript
+
+search = ScavioYouTubeSearch(max_results=5)
+result = search.invoke({
+    "query": "python tutorial",
+    "duration": "medium",                # short|medium|long
+    "upload_date": "this_month",         # last_hour|today|this_week|this_month|this_year
+    "sort_by": "view_count",             # relevance|date|view_count|rating
+    "video_type": "video",               # video|channel|playlist
+})
+
+metadata = ScavioYouTubeMetadata()
+result = metadata.invoke({"video_id": "dQw4w9WgXcQ"})
+
+transcript = ScavioYouTubeTranscript(max_segments=200)
+result = transcript.invoke({"video_id": "dQw4w9WgXcQ", "language": "en"})
 ```
 
 ## Agent-Controllable Parameters
 
-The LLM can dynamically set these at invocation time (overrides init defaults):
+### ScavioSearch
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `query` | `str` | required | Search query (1-500 chars) |
-| `search_type` | `classic\|news\|maps\|images\|lens` | `classic` | Type of search |
-| `country_code` | `str` | `None` | ISO 3166-1 alpha-2 country code |
-| `language` | `str` | `None` | ISO 639-1 language code |
-| `device` | `desktop\|mobile` | `desktop` | Device type (`news` only supports `desktop`) |
-| `page` | `int` | `1` | Result page number |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | `str` | Search query |
+| `search_type` | `classic\|news\|maps\|images\|lens` | Type of search |
+| `country_code` | `str` | ISO 3166-1 alpha-2 |
+| `language` | `str` | ISO 639-1 |
+| `device` | `desktop\|mobile` | Device type |
+| `page` | `int` | Result page number |
+
+### ScavioAmazonSearch
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | `str` | Product search query |
+| `domain` | `str` | Amazon domain (com, co.uk, de, ...) |
+| `sort_by` | `str` | most_recent\|price_low_to_high\|price_high_to_low\|featured\|average_review\|bestsellers |
+| `start_page` | `int` | Page number |
+| `category_id` | `str` | Category filter |
+| `country` / `language` / `currency` | `str` | Localization |
+| `zip_code` | `str` | Local pricing |
+
+### ScavioWalmartSearch
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | `str` | Product search query |
+| `sort_by` | `str` | best_match\|price_low\|price_high\|best_seller |
+| `min_price` / `max_price` | `int` | Price range in cents |
+| `fulfillment_speed` | `str` | today\|tomorrow\|2_days\|anytime |
+| `delivery_zip` | `str` | Delivery ZIP code |
+
+### ScavioYouTubeSearch
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | `str` | Search query |
+| `upload_date` | `str` | last_hour\|today\|this_week\|this_month\|this_year |
+| `video_type` | `str` | video\|channel\|playlist |
+| `duration` | `str` | short\|medium\|long |
+| `sort_by` | `str` | relevance\|date\|view_count\|rating |
+| `hd` / `subtitles` / `live` | `bool` | Content filters |
 
 ## Error Handling
 
@@ -106,22 +208,21 @@ The LLM can dynamically set these at invocation time (overrides init defaults):
 
 ## Architecture
 
-Two-layer design:
-
 ```
-ScavioBaseAPIWrapper          # Auth, headers, sync/async HTTP POST
-  +-- ScavioSearchAPIWrapper  # _build_url() -> /api/v1/google
-
-ScavioSearch(BaseTool)        # LangChain tool wrapping ScavioSearchAPIWrapper
+ScavioBaseAPIWrapper                      # Auth, headers, sync/async HTTP POST
+  +-- ScavioSearchAPIWrapper              # -> /api/v1/google
+  +-- ScavioAmazonSearchAPIWrapper        # -> /api/v1/amazon/search
+  +-- ScavioAmazonProductAPIWrapper       # -> /api/v1/amazon/product
+  +-- ScavioWalmartSearchAPIWrapper       # -> /api/v1/walmart/search
+  +-- ScavioWalmartProductAPIWrapper      # -> /api/v1/walmart/product
+  +-- ScavioYouTubeSearchAPIWrapper       # -> /api/v1/youtube/search
+  +-- ScavioYouTubeMetadataAPIWrapper     # -> /api/v1/youtube/metadata
+  +-- ScavioYouTubeTranscriptAPIWrapper   # -> /api/v1/youtube/transcript
 ```
 
-- **`ScavioBaseAPIWrapper`** -- shared plumbing (API key via `SCAVIO_API_KEY` env var, `_build_headers()`, `raw_results()`, `raw_results_async()`). Subclasses override `_build_url()`.
-- **`ScavioSearchAPIWrapper`** -- thin subclass targeting the Google Search endpoint.
-- **`ScavioSearch`** -- LangChain `BaseTool` with init-only params (developer-controlled) and an `args_schema` for LLM-controllable params.
+Each tool splits parameters into **init-only** (developer-controlled, e.g. `max_results`, `domain`) and **LLM-controllable** (passed via `args_schema` at invocation time, e.g. `query`, `sort_by`).
 
 ## Migrating from Tavily
-
-Switching from `langchain-tavily` requires minimal changes:
 
 ```diff
 - from langchain_tavily import TavilySearch
