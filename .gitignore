@@ -29,3 +29,5 @@ build/
 # Project artifacts
 run.py
 result.json
+
+CLAUDE.md

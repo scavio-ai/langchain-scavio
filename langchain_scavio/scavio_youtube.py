@@ -148,6 +148,10 @@ class ScavioYouTubeSearch(BaseTool):  # type: ignore[override]
             api_wrapper_kwargs["scavio_api_key"] = kwargs.pop("scavio_api_key")
         if "api_base_url" in kwargs:
             api_wrapper_kwargs["api_base_url"] = kwargs.pop("api_base_url")
+        if "max_requests_per_second" in kwargs:
+            api_wrapper_kwargs["max_requests_per_second"] = kwargs.pop(
+                "max_requests_per_second"
+            )
         if api_wrapper_kwargs and "api_wrapper" not in kwargs:
             kwargs["api_wrapper"] = ScavioYouTubeSearchAPIWrapper(**api_wrapper_kwargs)
         super().__init__(**kwargs)
@@ -323,6 +327,10 @@ class ScavioYouTubeMetadata(BaseTool):  # type: ignore[override]
             api_wrapper_kwargs["scavio_api_key"] = kwargs.pop("scavio_api_key")
         if "api_base_url" in kwargs:
             api_wrapper_kwargs["api_base_url"] = kwargs.pop("api_base_url")
+        if "max_requests_per_second" in kwargs:
+            api_wrapper_kwargs["max_requests_per_second"] = kwargs.pop(
+                "max_requests_per_second"
+            )
         if api_wrapper_kwargs and "api_wrapper" not in kwargs:
             kwargs["api_wrapper"] = ScavioYouTubeMetadataAPIWrapper(
                 **api_wrapper_kwargs
@@ -454,6 +462,10 @@ class ScavioYouTubeTranscript(BaseTool):  # type: ignore[override]
             api_wrapper_kwargs["scavio_api_key"] = kwargs.pop("scavio_api_key")
         if "api_base_url" in kwargs:
             api_wrapper_kwargs["api_base_url"] = kwargs.pop("api_base_url")
+        if "max_requests_per_second" in kwargs:
+            api_wrapper_kwargs["max_requests_per_second"] = kwargs.pop(
+                "max_requests_per_second"
+            )
         if api_wrapper_kwargs and "api_wrapper" not in kwargs:
             kwargs["api_wrapper"] = ScavioYouTubeTranscriptAPIWrapper(
                 **api_wrapper_kwargs

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -18,6 +19,7 @@ from langchain_scavio._utilities import (
     ScavioYouTubeMetadataAPIWrapper,
     ScavioYouTubeSearchAPIWrapper,
     ScavioYouTubeTranscriptAPIWrapper,
+    _RateLimiter,
 )
 
 from .conftest import MOCK_API_KEY, make_error_response, make_light_response
@@ -235,3 +237,150 @@ class TestAsyncRequests:
         ):
             with pytest.raises(ValueError, match="Invalid API key"):
                 await wrapper.raw_results_async(query="test")
+
+
+class TestRateLimiter:
+    def test_default_max_requests_per_second(self) -> None:
+        wrapper = ScavioSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert wrapper.max_requests_per_second == 1
+
+    def test_custom_max_requests_per_second(self) -> None:
+        wrapper = ScavioSearchAPIWrapper(
+            scavio_api_key=MOCK_API_KEY, max_requests_per_second=5
+        )
+        assert wrapper.max_requests_per_second == 5
+
+    def test_max_requests_per_second_upper_bound(self) -> None:
+        with pytest.raises(Exception):
+            ScavioSearchAPIWrapper(
+                scavio_api_key=MOCK_API_KEY, max_requests_per_second=11
+            )
+
+    def test_max_requests_per_second_lower_bound(self) -> None:
+        with pytest.raises(Exception):
+            ScavioSearchAPIWrapper(
+                scavio_api_key=MOCK_API_KEY, max_requests_per_second=0
+            )
+
+    def test_rate_limiter_throttles_sync(self) -> None:
+        limiter = _RateLimiter(max_per_second=1)
+        limiter.wait()
+        start = time.monotonic()
+        limiter.wait()
+        elapsed = time.monotonic() - start
+        assert elapsed >= 0.9
+
+    def test_rate_limiter_allows_burst_within_limit(self) -> None:
+        limiter = _RateLimiter(max_per_second=5)
+        start = time.monotonic()
+        for _ in range(5):
+            limiter.wait()
+        elapsed = time.monotonic() - start
+        assert elapsed < 0.5
+
+    @pytest.mark.asyncio
+    async def test_rate_limiter_throttles_async(self) -> None:
+        limiter = _RateLimiter(max_per_second=1)
+        await limiter.wait_async()
+        start = time.monotonic()
+        await limiter.wait_async()
+        elapsed = time.monotonic() - start
+        assert elapsed >= 0.9
+
+    @responses.activate
+    def test_rate_limiter_applied_to_sync_requests(self) -> None:
+        for _ in range(3):
+            responses.add(
+                responses.POST, API_ENDPOINT, json=make_light_response(), status=200
+            )
+        wrapper = ScavioSearchAPIWrapper(
+            scavio_api_key=MOCK_API_KEY, max_requests_per_second=2
+        )
+        start = time.monotonic()
+        wrapper.raw_results(query="test1")
+        wrapper.raw_results(query="test2")
+        wrapper.raw_results(query="test3")
+        elapsed = time.monotonic() - start
+        # 3 requests at 2/s: first 2 go through immediately, 3rd waits ~1s
+        assert elapsed >= 0.9
+        assert len(responses.calls) == 3
+
+    def test_rate_limit_propagates_to_all_wrappers(self) -> None:
+        for cls in (
+            ScavioSearchAPIWrapper,
+            ScavioAmazonSearchAPIWrapper,
+            ScavioAmazonProductAPIWrapper,
+            ScavioWalmartSearchAPIWrapper,
+            ScavioWalmartProductAPIWrapper,
+            ScavioYouTubeSearchAPIWrapper,
+            ScavioYouTubeMetadataAPIWrapper,
+            ScavioYouTubeTranscriptAPIWrapper,
+        ):
+            w = cls(scavio_api_key=MOCK_API_KEY, max_requests_per_second=7)
+            assert w.max_requests_per_second == 7
+
+
+class TestRateLimitToolForwarding:
+    def test_search_tool_forwards_rate_limit(self) -> None:
+        from langchain_scavio import ScavioSearch
+
+        tool = ScavioSearch(
+            scavio_api_key=MOCK_API_KEY, max_requests_per_second=5
+        )
+        assert tool.api_wrapper.max_requests_per_second == 5
+
+    def test_amazon_search_forwards_rate_limit(self) -> None:
+        from langchain_scavio import ScavioAmazonSearch
+
+        tool = ScavioAmazonSearch(
+            scavio_api_key=MOCK_API_KEY, max_requests_per_second=3
+        )
+        assert tool.api_wrapper.max_requests_per_second == 3
+
+    def test_amazon_product_forwards_rate_limit(self) -> None:
+        from langchain_scavio import ScavioAmazonProduct
+
+        tool = ScavioAmazonProduct(
+            scavio_api_key=MOCK_API_KEY, max_requests_per_second=3
+        )
+        assert tool.api_wrapper.max_requests_per_second == 3
+
+    def test_walmart_search_forwards_rate_limit(self) -> None:
+        from langchain_scavio import ScavioWalmartSearch
+
+        tool = ScavioWalmartSearch(
+            scavio_api_key=MOCK_API_KEY, max_requests_per_second=4
+        )
+        assert tool.api_wrapper.max_requests_per_second == 4
+
+    def test_walmart_product_forwards_rate_limit(self) -> None:
+        from langchain_scavio import ScavioWalmartProduct
+
+        tool = ScavioWalmartProduct(
+            scavio_api_key=MOCK_API_KEY, max_requests_per_second=4
+        )
+        assert tool.api_wrapper.max_requests_per_second == 4
+
+    def test_youtube_search_forwards_rate_limit(self) -> None:
+        from langchain_scavio import ScavioYouTubeSearch
+
+        tool = ScavioYouTubeSearch(
+            scavio_api_key=MOCK_API_KEY, max_requests_per_second=10
+        )
+        assert tool.api_wrapper.max_requests_per_second == 10
+
+    def test_youtube_metadata_forwards_rate_limit(self) -> None:
+        from langchain_scavio import ScavioYouTubeMetadata
+
+        tool = ScavioYouTubeMetadata(
+            scavio_api_key=MOCK_API_KEY, max_requests_per_second=10
+        )
+        assert tool.api_wrapper.max_requests_per_second == 10
+
+    def test_youtube_transcript_forwards_rate_limit(self) -> None:
+        from langchain_scavio import ScavioYouTubeTranscript
+
+        tool = ScavioYouTubeTranscript(
+            scavio_api_key=MOCK_API_KEY, max_requests_per_second=10
+        )
+        assert tool.api_wrapper.max_requests_per_second == 10
