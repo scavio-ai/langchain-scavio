@@ -8,7 +8,6 @@ from langchain_scavio.scavio_walmart import ScavioWalmartProduct, ScavioWalmartS
 from langchain_scavio.scavio_youtube import (
     ScavioYouTubeMetadata,
     ScavioYouTubeSearch,
-    ScavioYouTubeTranscript,
 )
 
 try:
@@ -25,6 +24,5 @@ __all__ = [
     "ScavioWalmartProduct",
     "ScavioYouTubeSearch",
     "ScavioYouTubeMetadata",
-    "ScavioYouTubeTranscript",
     "__version__",
 ]
