@@ -12,7 +12,6 @@ from langchain_scavio.scavio_walmart import ScavioWalmartProduct, ScavioWalmartS
 from langchain_scavio.scavio_youtube import (
     ScavioYouTubeMetadata,
     ScavioYouTubeSearch,
-    ScavioYouTubeTranscript,
 )
 
 MOCK_API_KEY = "sk_live_test_key_12345"
@@ -250,25 +249,6 @@ def make_youtube_metadata_response(**overrides: Any) -> dict[str, Any]:
     return base
 
 
-def make_youtube_transcript_response(**overrides: Any) -> dict[str, Any]:
-    """Build a mock YouTube transcript API response (actual: data.transcripts)."""
-    transcripts = [
-        {
-            "text": f"Transcript segment {i}.",
-            "start": float(i * 5),
-            "duration": 5.0,
-        }
-        for i in range(30)
-    ]
-    base: dict[str, Any] = {
-        "data": {"text": "", "transcripts": transcripts},
-        "response_time": 0.6,
-        "credits_used": 1,
-        "credits_remaining": 999,
-    }
-    base.update(overrides)
-    return base
-
 
 @pytest.fixture()
 def amazon_search_tool() -> ScavioAmazonSearch:
@@ -306,7 +286,3 @@ def youtube_metadata_tool() -> ScavioYouTubeMetadata:
     return ScavioYouTubeMetadata(scavio_api_key=MOCK_API_KEY)
 
 
-@pytest.fixture()
-def youtube_transcript_tool() -> ScavioYouTubeTranscript:
-    """ScavioYouTubeTranscript with default settings and a test API key."""
-    return ScavioYouTubeTranscript(scavio_api_key=MOCK_API_KEY)

@@ -226,9 +226,3 @@ class ScavioYouTubeMetadataAPIWrapper(ScavioBaseAPIWrapper):
         return f"{base}/api/v1/youtube/metadata"
 
 
-class ScavioYouTubeTranscriptAPIWrapper(ScavioBaseAPIWrapper):
-    """Wrapper for the Scavio YouTube Transcript endpoint."""
-
-    def _build_url(self) -> str:
-        base = self.api_base_url or SCAVIO_API_URL
-        return f"{base}/api/v1/youtube/transcript"

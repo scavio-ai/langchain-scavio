@@ -18,7 +18,6 @@ from langchain_scavio._utilities import (
     ScavioWalmartSearchAPIWrapper,
     ScavioYouTubeMetadataAPIWrapper,
     ScavioYouTubeSearchAPIWrapper,
-    ScavioYouTubeTranscriptAPIWrapper,
     _RateLimiter,
 )
 
@@ -168,10 +167,6 @@ class TestWrapperURLs:
         w = ScavioYouTubeMetadataAPIWrapper(scavio_api_key=MOCK_API_KEY)
         assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/youtube/metadata"
 
-    def test_youtube_transcript_wrapper_url(self) -> None:
-        w = ScavioYouTubeTranscriptAPIWrapper(scavio_api_key=MOCK_API_KEY)
-        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/youtube/transcript"
-
     def test_custom_base_url_propagates_to_all_wrappers(self) -> None:
         custom = "https://custom.api.dev"
         for cls in (
@@ -181,7 +176,6 @@ class TestWrapperURLs:
             ScavioWalmartProductAPIWrapper,
             ScavioYouTubeSearchAPIWrapper,
             ScavioYouTubeMetadataAPIWrapper,
-            ScavioYouTubeTranscriptAPIWrapper,
         ):
             w = cls(scavio_api_key=MOCK_API_KEY, api_base_url=custom)
             assert w._build_url().startswith(custom)
@@ -314,7 +308,6 @@ class TestRateLimiter:
             ScavioWalmartProductAPIWrapper,
             ScavioYouTubeSearchAPIWrapper,
             ScavioYouTubeMetadataAPIWrapper,
-            ScavioYouTubeTranscriptAPIWrapper,
         ):
             w = cls(scavio_api_key=MOCK_API_KEY, max_requests_per_second=7)
             assert w.max_requests_per_second == 7
@@ -377,10 +370,3 @@ class TestRateLimitToolForwarding:
         )
         assert tool.api_wrapper.max_requests_per_second == 10
 
-    def test_youtube_transcript_forwards_rate_limit(self) -> None:
-        from langchain_scavio import ScavioYouTubeTranscript
-
-        tool = ScavioYouTubeTranscript(
-            scavio_api_key=MOCK_API_KEY, max_requests_per_second=10
-        )
-        assert tool.api_wrapper.max_requests_per_second == 10
