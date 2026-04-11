@@ -27,7 +27,6 @@ pip install langchain-scavio
 | `ScavioWalmartProduct` | Fetch full details for a Walmart product by ID |
 | `ScavioYouTubeSearch` | Search YouTube videos with duration/date/type filters |
 | `ScavioYouTubeMetadata` | Fetch metadata for a YouTube video by video ID |
-| `ScavioYouTubeTranscript` | Fetch the transcript of a YouTube video |
 
 ## Quick Start
 
@@ -43,27 +42,28 @@ tool = ScavioSearch()
 result = tool.invoke({"query": "best python web frameworks 2026"})
 ```
 
-## Use with LangGraph
+## Use with a LangChain Agent
+
+Scavio tools plug into the current [`create_agent`](https://docs.langchain.com/oss/python/langchain/agents) API from `langchain.agents`:
 
 ```python
-from langgraph.prebuilt import create_react_agent
-from langchain_openai import ChatOpenAI
+from langchain.agents import create_agent
 from langchain_scavio import (
     ScavioSearch,
     ScavioAmazonSearch, ScavioAmazonProduct,
     ScavioWalmartSearch,
-    ScavioYouTubeSearch, ScavioYouTubeTranscript,
+    ScavioYouTubeSearch, ScavioYouTubeMetadata,
 )
 
-agent = create_react_agent(
-    ChatOpenAI(model="gpt-4o"),
+agent = create_agent(
+    "openai:gpt-4o",
     tools=[
         ScavioSearch(max_results=5),
         ScavioAmazonSearch(max_results=5),
         ScavioAmazonProduct(),
         ScavioWalmartSearch(max_results=5),
         ScavioYouTubeSearch(max_results=5),
-        ScavioYouTubeTranscript(),
+        ScavioYouTubeMetadata(),
     ],
 )
 
@@ -109,12 +109,14 @@ from langchain_scavio import ScavioAmazonSearch, ScavioAmazonProduct
 search = ScavioAmazonSearch(
     max_results=5,
     pages=1,                             # number of result pages to fetch
-    domain="com",                        # com|co.uk|de|fr|co.jp|ca|...
+    domain="com",                        # see supported marketplaces below
 )
 
 product = ScavioAmazonProduct()
 result = product.invoke({"query": "B08N5WRWNW"})  # query = ASIN
 ```
+
+> **Targeting a marketplace:** use `domain` to pick which Amazon store to search — **do not** use a country code. Supported domains: `com` (US), `co.uk` (UK), `ca`, `de`, `fr`, `es`, `it`, `co.jp`, `in`, `com.au`, `com.br`, `com.mx`, `nl`, `pl`, `se`, `sg`, `ae`, `sa`, `eg`, `cn`, `com.be`, `com.tr`.
 
 ### Walmart
 
@@ -136,7 +138,7 @@ result = product.invoke({"product_id": "123456789"})
 ### YouTube
 
 ```python
-from langchain_scavio import ScavioYouTubeSearch, ScavioYouTubeMetadata, ScavioYouTubeTranscript
+from langchain_scavio import ScavioYouTubeSearch, ScavioYouTubeMetadata
 
 search = ScavioYouTubeSearch(max_results=5)
 result = search.invoke({
@@ -149,9 +151,6 @@ result = search.invoke({
 
 metadata = ScavioYouTubeMetadata()
 result = metadata.invoke({"video_id": "dQw4w9WgXcQ"})
-
-transcript = ScavioYouTubeTranscript(max_segments=200)
-result = transcript.invoke({"video_id": "dQw4w9WgXcQ", "language": "en"})
 ```
 
 ## Agent-Controllable Parameters
@@ -172,11 +171,12 @@ result = transcript.invoke({"video_id": "dQw4w9WgXcQ", "language": "en"})
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `query` | `str` | Product search query |
-| `domain` | `str` | Amazon domain (com, co.uk, de, ...) |
-| `sort_by` | `str` | most_recent\|price_low_to_high\|price_high_to_low\|featured\|average_review\|bestsellers |
+| `domain` | `str` | Amazon marketplace — the only way to select a store (com, co.uk, de, co.jp, ...) |
+| `sort_by` | `str` | featured\|most_recent\|price_low_to_high\|price_high_to_low\|average_review\|bestsellers |
 | `start_page` | `int` | Page number |
 | `category_id` | `str` | Category filter |
-| `country` / `language` / `currency` | `str` | Localization |
+| `merchant_id` | `str` | Seller filter |
+| `language` / `currency` | `str` | Localization |
 | `zip_code` | `str` | Local pricing |
 
 ### ScavioWalmartSearch
@@ -217,7 +217,6 @@ ScavioBaseAPIWrapper                      # Auth, headers, sync/async HTTP POST
   +-- ScavioWalmartProductAPIWrapper      # -> /api/v1/walmart/product
   +-- ScavioYouTubeSearchAPIWrapper       # -> /api/v1/youtube/search
   +-- ScavioYouTubeMetadataAPIWrapper     # -> /api/v1/youtube/metadata
-  +-- ScavioYouTubeTranscriptAPIWrapper   # -> /api/v1/youtube/transcript
 ```
 
 Each tool splits parameters into **init-only** (developer-controlled, e.g. `max_results`, `domain`) and **LLM-controllable** (passed via `args_schema` at invocation time, e.g. `query`, `sort_by`).

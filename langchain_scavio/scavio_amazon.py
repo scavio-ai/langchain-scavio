@@ -32,8 +32,14 @@ class ScavioAmazonSearchInput(BaseModel):
     domain: Optional[str] = Field(
         default=None,
         description=(
-            'Amazon domain to search (e.g., "com", "co.uk", "de", "fr", "co.jp", '
-            '"ca", "it", "es", "in", "com.au"). Default is "com".'
+            "Amazon marketplace to search. This is the ONLY way to select a "
+            "country's Amazon store. Supported values: "
+            '"com" (US, default), "co.uk" (UK), "ca" (Canada), "de" (Germany), '
+            '"fr" (France), "es" (Spain), "it" (Italy), "co.jp" (Japan), '
+            '"in" (India), "com.au" (Australia), "com.br" (Brazil), '
+            '"com.mx" (Mexico), "nl" (Netherlands), "pl" (Poland), '
+            '"se" (Sweden), "sg" (Singapore), "ae" (UAE), "sa" (Saudi Arabia), '
+            '"eg" (Egypt), "cn" (China), "com.be" (Belgium), "com.tr" (Turkey).'
         ),
     )
 
@@ -71,14 +77,6 @@ class ScavioAmazonSearchInput(BaseModel):
     merchant_id: Optional[str] = Field(
         default=None,
         description="Amazon merchant/seller ID to filter results to a specific seller.",
-    )
-
-    country: Optional[str] = Field(
-        default=None,
-        description=(
-            "Country code for localized pricing and availability "
-            '(e.g., "US", "GB", "DE").'
-        ),
     )
 
     language: Optional[str] = Field(
@@ -174,7 +172,6 @@ class ScavioAmazonSearch(BaseTool):  # type: ignore[override]
         start_page: Optional[int] = None,
         category_id: Optional[str] = None,
         merchant_id: Optional[str] = None,
-        country: Optional[str] = None,
         language: Optional[str] = None,
         currency: Optional[str] = None,
         device: Optional[str] = None,
@@ -199,7 +196,6 @@ class ScavioAmazonSearch(BaseTool):  # type: ignore[override]
                 pages=self.pages,
                 category_id=category_id,
                 merchant_id=merchant_id,
-                country=country,
                 language=language,
                 currency=currency,
                 device=device,
@@ -220,7 +216,6 @@ class ScavioAmazonSearch(BaseTool):  # type: ignore[override]
         start_page: Optional[int] = None,
         category_id: Optional[str] = None,
         merchant_id: Optional[str] = None,
-        country: Optional[str] = None,
         language: Optional[str] = None,
         currency: Optional[str] = None,
         device: Optional[str] = None,
@@ -245,7 +240,6 @@ class ScavioAmazonSearch(BaseTool):  # type: ignore[override]
                 pages=self.pages,
                 category_id=category_id,
                 merchant_id=merchant_id,
-                country=country,
                 language=language,
                 currency=currency,
                 device=device,
@@ -286,12 +280,16 @@ class ScavioAmazonProductInput(BaseModel):
 
     domain: Optional[str] = Field(
         default=None,
-        description='Amazon domain (e.g., "com", "co.uk", "de"). Default is "com".',
-    )
-
-    country: Optional[str] = Field(
-        default=None,
-        description='Country code for localized data (e.g., "US", "GB").',
+        description=(
+            "Amazon marketplace the ASIN belongs to. This is the ONLY way to "
+            "select a country's Amazon store. Supported values: "
+            '"com" (US, default), "co.uk" (UK), "ca" (Canada), "de" (Germany), '
+            '"fr" (France), "es" (Spain), "it" (Italy), "co.jp" (Japan), '
+            '"in" (India), "com.au" (Australia), "com.br" (Brazil), '
+            '"com.mx" (Mexico), "nl" (Netherlands), "pl" (Poland), '
+            '"se" (Sweden), "sg" (Singapore), "ae" (UAE), "sa" (Saudi Arabia), '
+            '"eg" (Egypt), "cn" (China), "com.be" (Belgium), "com.tr" (Turkey).'
+        ),
     )
 
     language: Optional[str] = Field(
@@ -380,7 +378,6 @@ class ScavioAmazonProduct(BaseTool):  # type: ignore[override]
         self,
         query: str,
         domain: Optional[str] = None,
-        country: Optional[str] = None,
         language: Optional[str] = None,
         currency: Optional[str] = None,
         device: Optional[str] = None,
@@ -395,7 +392,6 @@ class ScavioAmazonProduct(BaseTool):  # type: ignore[override]
             raw = self.api_wrapper.raw_results(
                 query=query,
                 domain=domain,
-                country=country,
                 language=language,
                 currency=currency,
                 device=device,
@@ -412,7 +408,6 @@ class ScavioAmazonProduct(BaseTool):  # type: ignore[override]
         self,
         query: str,
         domain: Optional[str] = None,
-        country: Optional[str] = None,
         language: Optional[str] = None,
         currency: Optional[str] = None,
         device: Optional[str] = None,
@@ -427,7 +422,6 @@ class ScavioAmazonProduct(BaseTool):  # type: ignore[override]
             raw = await self.api_wrapper.raw_results_async(
                 query=query,
                 domain=domain,
-                country=country,
                 language=language,
                 currency=currency,
                 device=device,
