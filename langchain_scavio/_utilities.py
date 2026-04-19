@@ -226,3 +226,19 @@ class ScavioYouTubeMetadataAPIWrapper(ScavioBaseAPIWrapper):
         return f"{base}/api/v1/youtube/metadata"
 
 
+class ScavioRedditSearchAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Reddit Search endpoint (POST /api/v1/reddit/search)."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/reddit/search"
+
+
+class ScavioRedditPostAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Reddit Post endpoint (POST /api/v1/reddit/post)."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/reddit/post"
+
+
