@@ -3,6 +3,7 @@
 from importlib import metadata
 
 from langchain_scavio.scavio_amazon import ScavioAmazonProduct, ScavioAmazonSearch
+from langchain_scavio.scavio_reddit import ScavioRedditPost, ScavioRedditSearch
 from langchain_scavio.scavio_search import ScavioSearch
 from langchain_scavio.scavio_walmart import ScavioWalmartProduct, ScavioWalmartSearch
 from langchain_scavio.scavio_youtube import (
@@ -24,5 +25,7 @@ __all__ = [
     "ScavioWalmartProduct",
     "ScavioYouTubeSearch",
     "ScavioYouTubeMetadata",
+    "ScavioRedditSearch",
+    "ScavioRedditPost",
     "__version__",
 ]

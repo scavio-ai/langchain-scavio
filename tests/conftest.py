@@ -8,6 +8,7 @@ import pytest
 
 from langchain_scavio import ScavioSearch
 from langchain_scavio.scavio_amazon import ScavioAmazonProduct, ScavioAmazonSearch
+from langchain_scavio.scavio_reddit import ScavioRedditPost, ScavioRedditSearch
 from langchain_scavio.scavio_walmart import ScavioWalmartProduct, ScavioWalmartSearch
 from langchain_scavio.scavio_youtube import (
     ScavioYouTubeMetadata,
@@ -284,5 +285,105 @@ def youtube_search_tool() -> ScavioYouTubeSearch:
 def youtube_metadata_tool() -> ScavioYouTubeMetadata:
     """ScavioYouTubeMetadata with default settings and a test API key."""
     return ScavioYouTubeMetadata(scavio_api_key=MOCK_API_KEY)
+
+
+def make_reddit_search_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock Reddit search API response (actual structure: data.posts)."""
+    posts = [
+        {
+            "position": i,
+            "id": f"t3_{i:08d}",
+            "title": f"Reddit Post {i}",
+            "url": (
+                f"https://www.reddit.com/r/test/comments/{i:08d}/reddit_post_{i}/"
+            ),
+            "subreddit": "test",
+            "author": f"user{i}",
+            "timestamp": "2026-04-15T16:34:40.389000+0000",
+            "nsfw": False,
+        }
+        for i in range(0, 10)
+    ]
+    base: dict[str, Any] = {
+        "data": {
+            "searchQuery": "test query",
+            "totalResults": len(posts),
+            "nextCursor": "eyJjYW5kaWRhdGVzX3JldH...",
+            "posts": posts,
+        },
+        "response_time": 5200,
+        "credits_used": 2,
+        "credits_remaining": 498,
+    }
+    base.update(overrides)
+    return base
+
+
+def make_reddit_post_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock Reddit post detail API response."""
+    base: dict[str, Any] = {
+        "data": {
+            "post": {
+                "id": "t3_abc123",
+                "title": "Example post title",
+                "author": "op_user",
+                "subreddit": "programming",
+                "url": (
+                    "https://www.reddit.com/r/programming/comments/abc123/"
+                    "example_post/"
+                ),
+                "contentUrl": "https://external-site.com/article",
+                "permalink": "/r/programming/comments/abc123/example_post/",
+                "body": "post body",
+                "score": 42,
+                "commentCount": 87,
+                "awardCount": 13,
+                "timestamp": "2026-04-15T16:34:40.389000+0000",
+                "nsfw": False,
+                "postType": "text",
+                "domain": "self.programming",
+                "flair": None,
+                "featuredAward": None,
+                "media": [],
+            },
+            "comments": [
+                {
+                    "id": "t1_c1",
+                    "author": "user1",
+                    "body": "top-level reply",
+                    "score": 5,
+                    "depth": 0,
+                    "timestamp": "2026-04-16T07:00:00.000000+0000",
+                    "permalink": "/r/programming/comments/abc123/comment/c1/",
+                },
+                {
+                    "id": "t1_c2",
+                    "author": "user2",
+                    "body": "nested reply",
+                    "score": 2,
+                    "depth": 1,
+                    "timestamp": "2026-04-16T08:00:00.000000+0000",
+                    "permalink": "/r/programming/comments/abc123/comment/c2/",
+                },
+            ],
+        },
+        "response_time": 5200,
+        "credits_used": 2,
+        "credits_remaining": 498,
+    }
+    base.update(overrides)
+    return base
+
+
+@pytest.fixture()
+def reddit_search_tool() -> ScavioRedditSearch:
+    """ScavioRedditSearch with default settings and a test API key."""
+    return ScavioRedditSearch(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def reddit_post_tool() -> ScavioRedditPost:
+    """ScavioRedditPost with default settings and a test API key."""
+    return ScavioRedditPost(scavio_api_key=MOCK_API_KEY)
 
 

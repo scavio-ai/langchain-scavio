@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-integration-blueviolet)](https://python.langchain.com/)
 
-LangChain integration for the [Scavio Search API](https://scavio.dev). Real-time structured data from Google, Amazon, Walmart, and YouTube — all through a single package.
+LangChain integration for the [Scavio Search API](https://scavio.dev). Real-time structured data from Google, Amazon, Walmart, YouTube, and Reddit — all through a single package.
 
 **Why Scavio?** Multi-platform coverage, structured knowledge graph data, and competitive pricing at $0.005/credit.
 
@@ -27,6 +27,8 @@ pip install langchain-scavio
 | `ScavioWalmartProduct` | Fetch full details for a Walmart product by ID |
 | `ScavioYouTubeSearch` | Search YouTube videos with duration/date/type filters |
 | `ScavioYouTubeMetadata` | Fetch metadata for a YouTube video by video ID |
+| `ScavioRedditSearch` | Search Reddit posts or comments with sort/pagination |
+| `ScavioRedditPost` | Fetch a Reddit post's metadata and comment thread by URL |
 
 ## Quick Start
 
@@ -53,6 +55,7 @@ from langchain_scavio import (
     ScavioAmazonSearch, ScavioAmazonProduct,
     ScavioWalmartSearch,
     ScavioYouTubeSearch, ScavioYouTubeMetadata,
+    ScavioRedditSearch, ScavioRedditPost,
 )
 
 agent = create_agent(
@@ -64,6 +67,8 @@ agent = create_agent(
         ScavioWalmartSearch(max_results=5),
         ScavioYouTubeSearch(max_results=5),
         ScavioYouTubeMetadata(),
+        ScavioRedditSearch(max_results=5),
+        ScavioRedditPost(),
     ],
 )
 
@@ -153,6 +158,34 @@ metadata = ScavioYouTubeMetadata()
 result = metadata.invoke({"video_id": "dQw4w9WgXcQ"})
 ```
 
+### Reddit
+
+Reddit endpoints cost 2 credits each and typically take 5-15 seconds (JS rendering required).
+
+```python
+from langchain_scavio import ScavioRedditSearch, ScavioRedditPost
+
+search = ScavioRedditSearch(max_results=5)
+result = search.invoke({
+    "query": "langchain",
+    "sort": "top",                       # new|relevance|hot|top|comments
+    "type": "posts",                     # posts|comments
+})
+
+# Paginate by passing back the previous response's nextCursor
+next_page = search.invoke({
+    "query": "langchain",
+    "sort": "top",
+    "cursor": result["data"]["nextCursor"],
+})
+
+post = ScavioRedditPost()
+result = post.invoke({
+    "url": "https://www.reddit.com/r/programming/comments/abc123/example_post/"
+})
+# result["data"]["post"] + result["data"]["comments"] (flat list with `depth`)
+```
+
 ## Agent-Controllable Parameters
 
 ### ScavioSearch
@@ -200,6 +233,21 @@ result = metadata.invoke({"video_id": "dQw4w9WgXcQ"})
 | `sort_by` | `str` | relevance\|date\|view_count\|rating |
 | `hd` / `subtitles` / `live` | `bool` | Content filters |
 
+### ScavioRedditSearch
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | `str` | Reddit search query (1-500 chars) |
+| `type` | `str` | posts\|comments |
+| `sort` | `str` | new\|relevance\|hot\|top\|comments |
+| `cursor` | `str` | Opaque pagination cursor from prior response's `nextCursor` |
+
+### ScavioRedditPost
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `url` | `str` | Full Reddit post URL (www., old., or new. subdomains accepted) |
+
 ## Error Handling
 
 - Empty results raise `ToolException` with actionable suggestions for the LLM
@@ -217,6 +265,8 @@ ScavioBaseAPIWrapper                      # Auth, headers, sync/async HTTP POST
   +-- ScavioWalmartProductAPIWrapper      # -> /api/v1/walmart/product
   +-- ScavioYouTubeSearchAPIWrapper       # -> /api/v1/youtube/search
   +-- ScavioYouTubeMetadataAPIWrapper     # -> /api/v1/youtube/metadata
+  +-- ScavioRedditSearchAPIWrapper        # -> /api/v1/reddit/search
+  +-- ScavioRedditPostAPIWrapper          # -> /api/v1/reddit/post
 ```
 
 Each tool splits parameters into **init-only** (developer-controlled, e.g. `max_results`, `domain`) and **LLM-controllable** (passed via `args_schema` at invocation time, e.g. `query`, `sort_by`).
