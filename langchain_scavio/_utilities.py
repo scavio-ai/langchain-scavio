@@ -88,9 +88,15 @@ class ScavioBaseAPIWrapper(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: dict[str, Any]) -> dict[str, Any]:
-        scavio_api_key = get_from_dict_or_env(
-            values, "scavio_api_key", "SCAVIO_API_KEY"
-        )
+        try:
+            scavio_api_key = get_from_dict_or_env(
+                values, "scavio_api_key", "SCAVIO_API_KEY"
+            )
+        except ValueError:
+            raise ValueError(
+                "No SCAVIO_API_KEY found. "
+                "Get your free API key at https://dashboard.scavio.dev"
+            )
         values["scavio_api_key"] = scavio_api_key
         return values
 
@@ -132,6 +138,11 @@ class ScavioBaseAPIWrapper(BaseModel):
             error = response.json().get("error", "Unknown error")
             if isinstance(error, dict):
                 error = error.get("message", "Unknown error")
+            if response.status_code == 429:
+                raise ValueError(
+                    f"Rate limit exceeded: {error}. "
+                    "Upgrade your plan at https://dashboard.scavio.dev/billing"
+                )
             raise ValueError(f"Error {response.status_code}: {error}")
         return response.json()
 
@@ -164,7 +175,15 @@ class ScavioBaseAPIWrapper(BaseModel):
                         error = json.loads(text).get("error", "Unknown error")
                         if isinstance(error, dict):
                             error = error.get("message", "Unknown error")
-                        raise ValueError(f"Error {response.status}: {error}")
+                        if response.status == 429:
+                            raise ValueError(
+                                f"Rate limit exceeded: {error}. "
+                                "Upgrade your plan at "
+                                "https://dashboard.scavio.dev/billing"
+                            )
+                        raise ValueError(
+                            f"Error {response.status}: {error}"
+                        )
                     return json.loads(text)
 
         return await fetch()
