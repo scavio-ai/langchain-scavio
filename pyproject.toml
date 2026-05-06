@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "langchain-scavio"
-version = "2.5"
+version = "2.6"
 description = "LangChain integration for Scavio Search API -- real-time Google, Amazon, Walmart, YouTube, and Reddit data with knowledge graphs and structured results"
 authors = ["Scavio"]
 readme = "README.md"
@@ -12,9 +12,9 @@ homepage = "https://scavio.dev"
 repository = "https://github.com/scavio-ai/langchain-scavio"
 documentation = "https://scavio.dev/docs/langchain"
 license = "MIT"
-keywords = ["langchain", "search", "ai", "agents", "web-search", "knowledge-graph", "tavily-alternative", "langgraph", "serp"]
+keywords = ["langchain", "search", "ai", "agents", "web-search", "knowledge-graph", "tavily-alternative", "langgraph", "serp", "amazon-search", "walmart-search", "youtube-search", "reddit-search", "ecommerce", "product-search"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Internet :: WWW/HTTP :: Indexing/Search",

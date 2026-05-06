@@ -6,33 +6,34 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-integration-blueviolet)](https://python.langchain.com/)
 
-LangChain integration for the [Scavio Search API](https://scavio.dev). Real-time structured data from Google, Amazon, Walmart, YouTube, and Reddit — all through a single package.
-
-**Why Scavio?** Multi-platform coverage, structured knowledge graph data, and competitive pricing at $0.005/credit.
-
-## Installation
+**9 LangChain tools for real-time search across Google, Amazon, Walmart, YouTube, and Reddit** -- structured data with knowledge graphs, all through a single package.
 
 ```bash
 pip install langchain-scavio
 ```
 
-## Tools
+Get your free API key at [dashboard.scavio.dev](https://dashboard.scavio.dev/).
 
-| Tool | Description |
-|------|-------------|
-| `ScavioSearch` | Google web search with knowledge graphs, PAA questions, news |
-| `ScavioAmazonSearch` | Search Amazon product listings |
-| `ScavioAmazonProduct` | Fetch full details for an Amazon product by ASIN |
-| `ScavioWalmartSearch` | Search Walmart product listings |
-| `ScavioWalmartProduct` | Fetch full details for a Walmart product by ID |
-| `ScavioYouTubeSearch` | Search YouTube videos with duration/date/type filters |
-| `ScavioYouTubeMetadata` | Fetch metadata for a YouTube video by video ID |
-| `ScavioRedditSearch` | Search Reddit posts or comments with sort/pagination |
-| `ScavioRedditPost` | Fetch a Reddit post's metadata and comment thread by URL |
+## Why Scavio over Tavily?
+
+| | Scavio | Tavily | SerpAPI |
+|---|---|---|---|
+| **Platforms** | Google, Amazon, Walmart, YouTube, Reddit | Google only | Google + others |
+| **Tools** | 9 | 1 | 1 per wrapper |
+| **Knowledge graphs** | Yes | No | Partial |
+| **Product data** (price, rating, reviews) | Yes | No | No |
+| **Pricing** | $0.005/credit | $0.01/search | $0.05/search |
+| **Amazon marketplace coverage** | 23 countries | -- | -- |
+| **LangChain async** | Yes | Yes | Yes |
+
+## What Can You Build?
+
+- **Shopping agents** -- search Amazon and Walmart, compare prices, find deals across 23 marketplaces
+- **Product research agents** -- Google reviews + Amazon listings + YouTube reviews + Reddit opinions in one query
+- **Content research agents** -- YouTube trends + Reddit sentiment + Google news in a single workflow
+- **Brand monitoring** -- track what Reddit and Google say about any topic in real time
 
 ## Quick Start
-
-Get your API key at [dashboard.scavio.dev](https://dashboard.scavio.dev/).
 
 ```python
 import os
@@ -43,6 +44,20 @@ os.environ["SCAVIO_API_KEY"] = "sk_live_..."
 tool = ScavioSearch()
 result = tool.invoke({"query": "best python web frameworks 2026"})
 ```
+
+## All 9 Tools
+
+| Tool | Description |
+|------|-------------|
+| `ScavioSearch` | Google web search with knowledge graphs, PAA questions, news |
+| `ScavioAmazonSearch` | Search Amazon product listings across 23 marketplaces |
+| `ScavioAmazonProduct` | Fetch full details for an Amazon product by ASIN |
+| `ScavioWalmartSearch` | Search Walmart product listings with price/fulfillment filters |
+| `ScavioWalmartProduct` | Fetch full details for a Walmart product by ID |
+| `ScavioYouTubeSearch` | Search YouTube videos with duration/date/type filters |
+| `ScavioYouTubeMetadata` | Fetch metadata for a YouTube video by video ID |
+| `ScavioRedditSearch` | Search Reddit posts or comments with sort/pagination |
+| `ScavioRedditPost` | Fetch a Reddit post's metadata and comment thread by URL |
 
 ## Use with a LangChain Agent
 
@@ -121,7 +136,7 @@ product = ScavioAmazonProduct()
 result = product.invoke({"query": "B08N5WRWNW"})  # query = ASIN
 ```
 
-> **Targeting a marketplace:** use `domain` to pick which Amazon store to search — **do not** use a country code. Supported domains: `com` (US), `co.uk` (UK), `ca`, `de`, `fr`, `es`, `it`, `co.jp`, `in`, `com.au`, `com.br`, `com.mx`, `nl`, `pl`, `se`, `sg`, `ae`, `sa`, `eg`, `cn`, `com.be`, `com.tr`.
+> **Targeting a marketplace:** use `domain` to pick which Amazon store to search -- **do not** use a country code. Supported domains: `com` (US), `co.uk` (UK), `ca`, `de`, `fr`, `es`, `it`, `co.jp`, `in`, `com.au`, `com.br`, `com.mx`, `nl`, `pl`, `se`, `sg`, `ae`, `sa`, `eg`, `cn`, `com.be`, `com.tr`.
 
 ### Walmart
 
@@ -204,7 +219,7 @@ result = post.invoke({
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `query` | `str` | Product search query |
-| `domain` | `str` | Amazon marketplace — the only way to select a store (com, co.uk, de, co.jp, ...) |
+| `domain` | `str` | Amazon marketplace -- the only way to select a store (com, co.uk, de, co.jp, ...) |
 | `sort_by` | `str` | featured\|most_recent\|price_low_to_high\|price_high_to_low\|average_review\|bestsellers |
 | `start_page` | `int` | Page number |
 | `category_id` | `str` | Category filter |

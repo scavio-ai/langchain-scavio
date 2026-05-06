@@ -24,7 +24,6 @@ build/
 
 # Claude
 .claude/
-.docs
 
 # Project artifacts
 run.py
