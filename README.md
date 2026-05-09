@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-integration-blueviolet)](https://python.langchain.com/)
 
-**9 LangChain tools for real-time search across Google, Amazon, Walmart, YouTube, and Reddit** -- structured data with knowledge graphs, all through a single package.
+**20 LangChain tools for real-time search across Google, Amazon, Walmart, YouTube, Reddit, and TikTok** -- structured data with knowledge graphs, all through a single package.
 
 ```bash
 pip install langchain-scavio
@@ -18,8 +18,8 @@ Get your free API key at [dashboard.scavio.dev](https://dashboard.scavio.dev/).
 
 | | Scavio | Tavily | SerpAPI |
 |---|---|---|---|
-| **Platforms** | Google, Amazon, Walmart, YouTube, Reddit | Google only | Google + others |
-| **Tools** | 9 | 1 | 1 per wrapper |
+| **Platforms** | Google, Amazon, Walmart, YouTube, Reddit, TikTok | Google only | Google + others |
+| **Tools** | 20 | 1 | 1 per wrapper |
 | **Knowledge graphs** | Yes | No | Partial |
 | **Product data** (price, rating, reviews) | Yes | No | No |
 | **Pricing** | $0.005/credit | $0.01/search | $0.05/search |
@@ -32,6 +32,7 @@ Get your free API key at [dashboard.scavio.dev](https://dashboard.scavio.dev/).
 - **Product research agents** -- Google reviews + Amazon listings + YouTube reviews + Reddit opinions in one query
 - **Content research agents** -- YouTube trends + Reddit sentiment + Google news in a single workflow
 - **Brand monitoring** -- track what Reddit and Google say about any topic in real time
+- **Social media agents** -- TikTok profile analytics, hashtag tracking, video comments, and trend discovery
 
 ## Quick Start
 
@@ -45,7 +46,7 @@ tool = ScavioSearch()
 result = tool.invoke({"query": "best python web frameworks 2026"})
 ```
 
-## All 9 Tools
+## All 20 Tools
 
 | Tool | Description |
 |------|-------------|
@@ -58,6 +59,17 @@ result = tool.invoke({"query": "best python web frameworks 2026"})
 | `ScavioYouTubeMetadata` | Fetch metadata for a YouTube video by video ID |
 | `ScavioRedditSearch` | Search Reddit posts or comments with sort/pagination |
 | `ScavioRedditPost` | Fetch a Reddit post's metadata and comment thread by URL |
+| `ScavioTikTokProfile` | Look up a TikTok user profile by username or sec_user_id |
+| `ScavioTikTokUserPosts` | Fetch a TikTok user's posted videos with statistics |
+| `ScavioTikTokVideo` | Fetch details for a single TikTok video |
+| `ScavioTikTokVideoComments` | Fetch comments on a TikTok video |
+| `ScavioTikTokCommentReplies` | Fetch replies to a specific comment on a TikTok video |
+| `ScavioTikTokSearchVideos` | Search TikTok videos by keyword with sort/time filters |
+| `ScavioTikTokSearchUsers` | Search TikTok users by keyword |
+| `ScavioTikTokHashtag` | Look up TikTok hashtag info (video count, views) |
+| `ScavioTikTokHashtagVideos` | Fetch TikTok videos for a specific hashtag |
+| `ScavioTikTokUserFollowers` | Fetch a TikTok user's followers |
+| `ScavioTikTokUserFollowings` | Fetch accounts a TikTok user is following |
 
 ## Use with a LangChain Agent
 
@@ -71,6 +83,7 @@ from langchain_scavio import (
     ScavioWalmartSearch,
     ScavioYouTubeSearch, ScavioYouTubeMetadata,
     ScavioRedditSearch, ScavioRedditPost,
+    ScavioTikTokSearchVideos, ScavioTikTokProfile, ScavioTikTokVideo,
 )
 
 agent = create_agent(
@@ -84,6 +97,9 @@ agent = create_agent(
         ScavioYouTubeMetadata(),
         ScavioRedditSearch(max_results=5),
         ScavioRedditPost(),
+        ScavioTikTokSearchVideos(max_results=5),
+        ScavioTikTokProfile(),
+        ScavioTikTokVideo(),
     ],
 )
 
@@ -201,6 +217,50 @@ result = post.invoke({
 # result["data"]["post"] + result["data"]["comments"] (flat list with `depth`)
 ```
 
+### TikTok
+
+```python
+from langchain_scavio import (
+    ScavioTikTokProfile, ScavioTikTokUserPosts, ScavioTikTokVideo,
+    ScavioTikTokVideoComments, ScavioTikTokCommentReplies,
+    ScavioTikTokSearchVideos, ScavioTikTokSearchUsers,
+    ScavioTikTokHashtag, ScavioTikTokHashtagVideos,
+    ScavioTikTokUserFollowers, ScavioTikTokUserFollowings,
+)
+
+# Look up a user profile (returns sec_uid needed by other tools)
+profile = ScavioTikTokProfile()
+result = profile.invoke({"username": "tiktok"})
+sec_uid = result["data"]["user"]["sec_uid"]
+
+# Fetch their recent posts
+posts = ScavioTikTokUserPosts(max_results=5)
+result = posts.invoke({"sec_user_id": sec_uid, "sort_type": "1"})  # popular
+
+# Search videos by keyword
+search = ScavioTikTokSearchVideos(max_results=5)
+result = search.invoke({
+    "keyword": "python tutorial",
+    "sort_type": "1",                        # 0=relevance, 1=most likes
+    "publish_time": "30",                    # 0=all, 1=day, 7=week, 30=month
+})
+
+# Get video details and comments
+video = ScavioTikTokVideo()
+result = video.invoke({"video_id": "7123456789012345678"})
+
+comments = ScavioTikTokVideoComments(max_results=10)
+result = comments.invoke({"video_id": "7123456789012345678"})
+
+# Hashtag research
+hashtag = ScavioTikTokHashtag()
+result = hashtag.invoke({"hashtag_name": "python"})
+hashtag_id = result["data"]["challengeInfo"]["challenge"]["id"]
+
+hashtag_videos = ScavioTikTokHashtagVideos(max_results=5)
+result = hashtag_videos.invoke({"hashtag_id": hashtag_id})
+```
+
 ## Agent-Controllable Parameters
 
 ### ScavioSearch
@@ -263,6 +323,87 @@ result = post.invoke({
 |-----------|------|-------------|
 | `url` | `str` | Full Reddit post URL (www., old., or new. subdomains accepted) |
 
+### ScavioTikTokProfile
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `username` | `str` | TikTok handle without @ (provide this or `sec_user_id`) |
+| `sec_user_id` | `str` | Secure user ID from a previous lookup |
+
+### ScavioTikTokUserPosts
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `sec_user_id` | `str` | Secure user ID from a profile lookup |
+| `cursor` | `str` | Pagination cursor (from `data.max_cursor`) |
+| `count` | `int` | Results per page (1-30, default 20) |
+| `sort_type` | `str` | 0=latest (default), 1=popular |
+
+### ScavioTikTokVideo
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `video_id` | `str` | TikTok video identifier |
+
+### ScavioTikTokVideoComments
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `video_id` | `str` | TikTok video identifier |
+| `cursor` | `str` | Pagination cursor |
+| `count` | `int` | Results per page (1-50, default 20) |
+
+### ScavioTikTokCommentReplies
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `video_id` | `str` | TikTok video identifier |
+| `comment_id` | `str` | Comment ID from the comments endpoint |
+| `cursor` | `str` | Pagination cursor |
+| `count` | `int` | Results per page (1-50, default 20) |
+
+### ScavioTikTokSearchVideos
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `keyword` | `str` | Search query (1-500 chars) |
+| `cursor` | `str` | Pagination offset |
+| `count` | `int` | Results per page (1-30, default 20) |
+| `sort_type` | `str` | 0=relevance (default), 1=most likes |
+| `publish_time` | `str` | 0=all, 1=day, 7=week, 30=month, 90=3mo, 180=6mo |
+
+### ScavioTikTokSearchUsers
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `keyword` | `str` | Search query (1-500 chars) |
+| `cursor` | `str` | Pagination offset |
+| `count` | `int` | Results per page (1-30, default 20) |
+
+### ScavioTikTokHashtag
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `hashtag_name` | `str` | Hashtag text without # (provide this or `hashtag_id`) |
+| `hashtag_id` | `str` | Numeric hashtag identifier |
+
+### ScavioTikTokHashtagVideos
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `hashtag_id` | `str` | Hashtag ID from the hashtag info endpoint |
+| `cursor` | `str` | Pagination cursor |
+| `count` | `int` | Results per page (1-30, default 20) |
+
+### ScavioTikTokUserFollowers / ScavioTikTokUserFollowings
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `sec_user_id` | `str` | Secure user ID from a profile lookup |
+| `count` | `int` | Results per page (1-20, default 20) |
+| `page_token` | `str` | Pagination token from `data.next_page_token` |
+| `min_time` | `int` | Pagination field from `data.min_time` |
+
 ## Error Handling
 
 - Empty results raise `ToolException` with actionable suggestions for the LLM
@@ -282,6 +423,17 @@ ScavioBaseAPIWrapper                      # Auth, headers, sync/async HTTP POST
   +-- ScavioYouTubeMetadataAPIWrapper     # -> /api/v1/youtube/metadata
   +-- ScavioRedditSearchAPIWrapper        # -> /api/v1/reddit/search
   +-- ScavioRedditPostAPIWrapper          # -> /api/v1/reddit/post
+  +-- ScavioTikTokProfileAPIWrapper       # -> /api/v1/tiktok/profile
+  +-- ScavioTikTokUserPostsAPIWrapper     # -> /api/v1/tiktok/user/posts
+  +-- ScavioTikTokVideoAPIWrapper         # -> /api/v1/tiktok/video
+  +-- ScavioTikTokVideoCommentsAPIWrapper # -> /api/v1/tiktok/video/comments
+  +-- ScavioTikTokCommentRepliesAPIWrapper# -> /api/v1/tiktok/video/comments/replies
+  +-- ScavioTikTokSearchVideosAPIWrapper  # -> /api/v1/tiktok/search/videos
+  +-- ScavioTikTokSearchUsersAPIWrapper   # -> /api/v1/tiktok/search/users
+  +-- ScavioTikTokHashtagAPIWrapper       # -> /api/v1/tiktok/hashtag
+  +-- ScavioTikTokHashtagVideosAPIWrapper # -> /api/v1/tiktok/hashtag/videos
+  +-- ScavioTikTokUserFollowersAPIWrapper # -> /api/v1/tiktok/user/followers
+  +-- ScavioTikTokUserFollowingsAPIWrapper# -> /api/v1/tiktok/user/followings
 ```
 
 Each tool splits parameters into **init-only** (developer-controlled, e.g. `max_results`, `domain`) and **LLM-controllable** (passed via `args_schema` at invocation time, e.g. `query`, `sort_by`).
