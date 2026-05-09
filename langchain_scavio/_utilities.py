@@ -261,3 +261,91 @@ class ScavioRedditPostAPIWrapper(ScavioBaseAPIWrapper):
         return f"{base}/api/v1/reddit/post"
 
 
+class ScavioTikTokProfileAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Profile endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok/profile"
+
+
+class ScavioTikTokUserPostsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok User Posts endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok/user/posts"
+
+
+class ScavioTikTokVideoAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Video endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok/video"
+
+
+class ScavioTikTokVideoCommentsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Video Comments endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok/video/comments"
+
+
+class ScavioTikTokCommentRepliesAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Comment Replies endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok/video/comments/replies"
+
+
+class ScavioTikTokSearchVideosAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Search Videos endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok/search/videos"
+
+
+class ScavioTikTokSearchUsersAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Search Users endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok/search/users"
+
+
+class ScavioTikTokHashtagAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Hashtag endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok/hashtag"
+
+
+class ScavioTikTokHashtagVideosAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Hashtag Videos endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok/hashtag/videos"
+
+
+class ScavioTikTokUserFollowersAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok User Followers endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok/user/followers"
+
+
+class ScavioTikTokUserFollowingsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok User Followings endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok/user/followings"
+
+
