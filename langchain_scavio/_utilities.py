@@ -349,3 +349,99 @@ class ScavioTikTokUserFollowingsAPIWrapper(ScavioBaseAPIWrapper):
         return f"{base}/api/v1/tiktok/user/followings"
 
 
+class ScavioInstagramProfileAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Instagram Profile endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/instagram/profile"
+
+
+class ScavioInstagramUserPostsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Instagram User Posts endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/instagram/user/posts"
+
+
+class ScavioInstagramUserReelsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Instagram User Reels endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/instagram/user/reels"
+
+
+class ScavioInstagramTaggedPostsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Instagram User Tagged endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/instagram/user/tagged"
+
+
+class ScavioInstagramStoriesAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Instagram User Stories endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/instagram/user/stories"
+
+
+class ScavioInstagramPostAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Instagram Post endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/instagram/post"
+
+
+class ScavioInstagramPostCommentsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Instagram Post Comments endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/instagram/post/comments"
+
+
+class ScavioInstagramCommentRepliesAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Instagram Comment Replies endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/instagram/post/comments/replies"
+
+
+class ScavioInstagramSearchUsersAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Instagram Search Users endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/instagram/search/users"
+
+
+class ScavioInstagramSearchHashtagsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Instagram Search Hashtags endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/instagram/search/hashtags"
+
+
+class ScavioInstagramUserFollowersAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Instagram User Followers endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/instagram/user/followers"
+
+
+class ScavioInstagramUserFollowingsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Instagram User Followings endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/instagram/user/followings"
+
+
