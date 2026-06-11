@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-integration-blueviolet)](https://python.langchain.com/)
 
-**20 LangChain tools for real-time search across Google, Amazon, Walmart, YouTube, Reddit, and TikTok** -- structured data with knowledge graphs, all through a single package.
+**32 LangChain tools for real-time search across Google, Amazon, Walmart, YouTube, Reddit, TikTok, and Instagram** -- structured data with knowledge graphs, all through a single package.
 
 ```bash
 pip install langchain-scavio
@@ -18,8 +18,8 @@ Get your free API key at [dashboard.scavio.dev](https://dashboard.scavio.dev/).
 
 | | Scavio | Tavily | SerpAPI |
 |---|---|---|---|
-| **Platforms** | Google, Amazon, Walmart, YouTube, Reddit, TikTok | Google only | Google + others |
-| **Tools** | 20 | 1 | 1 per wrapper |
+| **Platforms** | Google, Amazon, Walmart, YouTube, Reddit, TikTok, Instagram | Google only | Google + others |
+| **Tools** | 32 | 1 | 1 per wrapper |
 | **Knowledge graphs** | Yes | No | Partial |
 | **Product data** (price, rating, reviews) | Yes | No | No |
 | **Pricing** | $0.005/credit | $0.01/search | $0.05/search |
@@ -32,7 +32,7 @@ Get your free API key at [dashboard.scavio.dev](https://dashboard.scavio.dev/).
 - **Product research agents** -- Google reviews + Amazon listings + YouTube reviews + Reddit opinions in one query
 - **Content research agents** -- YouTube trends + Reddit sentiment + Google news in a single workflow
 - **Brand monitoring** -- track what Reddit and Google say about any topic in real time
-- **Social media agents** -- TikTok profile analytics, hashtag tracking, video comments, and trend discovery
+- **Social media agents** -- TikTok and Instagram profile analytics, hashtag tracking, post/video comments, and trend discovery
 
 ## Quick Start
 
@@ -46,7 +46,7 @@ tool = ScavioSearch()
 result = tool.invoke({"query": "best python web frameworks 2026"})
 ```
 
-## All 20 Tools
+## All 32 Tools
 
 | Tool | Description |
 |------|-------------|
@@ -70,6 +70,18 @@ result = tool.invoke({"query": "best python web frameworks 2026"})
 | `ScavioTikTokHashtagVideos` | Fetch TikTok videos for a specific hashtag |
 | `ScavioTikTokUserFollowers` | Fetch a TikTok user's followers |
 | `ScavioTikTokUserFollowings` | Fetch accounts a TikTok user is following |
+| `ScavioInstagramProfile` | Look up an Instagram user profile by username or user_id |
+| `ScavioInstagramUserPosts` | Fetch an Instagram user's posts with statistics |
+| `ScavioInstagramUserReels` | Fetch an Instagram user's reels with statistics |
+| `ScavioInstagramTaggedPosts` | Fetch posts an Instagram user is tagged in |
+| `ScavioInstagramStories` | Fetch an Instagram user's active stories |
+| `ScavioInstagramPost` | Fetch details for a single Instagram post or reel |
+| `ScavioInstagramPostComments` | Fetch comments on an Instagram post |
+| `ScavioInstagramCommentReplies` | Fetch replies to a specific comment on an Instagram post |
+| `ScavioInstagramSearchUsers` | Search Instagram users by keyword |
+| `ScavioInstagramSearchHashtags` | Search Instagram hashtags by keyword |
+| `ScavioInstagramUserFollowers` | Fetch an Instagram user's followers |
+| `ScavioInstagramUserFollowings` | Fetch accounts an Instagram user is following |
 
 ## Use with a LangChain Agent
 
@@ -261,6 +273,48 @@ hashtag_videos = ScavioTikTokHashtagVideos(max_results=5)
 result = hashtag_videos.invoke({"hashtag_id": hashtag_id})
 ```
 
+### Instagram
+
+```python
+from langchain_scavio import (
+    ScavioInstagramProfile, ScavioInstagramUserPosts, ScavioInstagramUserReels,
+    ScavioInstagramTaggedPosts, ScavioInstagramStories,
+    ScavioInstagramPost, ScavioInstagramPostComments,
+    ScavioInstagramCommentReplies, ScavioInstagramSearchUsers,
+    ScavioInstagramSearchHashtags,
+    ScavioInstagramUserFollowers, ScavioInstagramUserFollowings,
+)
+
+# Look up a user profile (returns user_id usable by other tools)
+profile = ScavioInstagramProfile()
+result = profile.invoke({"username": "instagram"})
+user_id = result["data"]["user"]["id"]
+
+# Fetch their recent posts and reels
+posts = ScavioInstagramUserPosts(max_results=5)
+result = posts.invoke({"username": "instagram"})
+
+reels = ScavioInstagramUserReels(max_results=5)
+result = reels.invoke({"username": "instagram"})
+
+# Get a single post's details and comments
+post = ScavioInstagramPost()
+result = post.invoke({"shortcode": "C1a2b3c4d5e"})
+
+comments = ScavioInstagramPostComments(max_results=10)
+result = comments.invoke({
+    "shortcode": "C1a2b3c4d5e",
+    "sort_order": "newest",                  # popular (default) or newest
+})
+
+# Search users and hashtags
+search_users = ScavioInstagramSearchUsers(max_results=5)
+result = search_users.invoke({"keyword": "cooking"})
+
+search_hashtags = ScavioInstagramSearchHashtags(max_results=5)
+result = search_hashtags.invoke({"keyword": "travel"})
+```
+
 ## Agent-Controllable Parameters
 
 ### ScavioSearch
@@ -404,6 +458,54 @@ result = hashtag_videos.invoke({"hashtag_id": hashtag_id})
 | `page_token` | `str` | Pagination token from `data.next_page_token` |
 | `min_time` | `int` | Pagination field from `data.min_time` |
 
+### ScavioInstagramProfile / ScavioInstagramStories
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `username` | `str` | Instagram handle without @ (provide this or `user_id`) |
+| `user_id` | `str` | Numeric user ID from a previous lookup |
+
+### ScavioInstagramUserPosts / ScavioInstagramUserReels / ScavioInstagramTaggedPosts / ScavioInstagramUserFollowers / ScavioInstagramUserFollowings
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `username` | `str` | Instagram handle without @ (provide this or `user_id`) |
+| `user_id` | `str` | Numeric user ID from a profile lookup |
+| `count` | `int` | Results per page (1-50, default 12) |
+| `cursor` | `str` | Pagination cursor from a prior response |
+
+### ScavioInstagramPost
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `url` | `str` | Full Instagram post or reel URL |
+| `media_id` | `str` | Numeric media identifier (provide one of url, media_id, shortcode) |
+| `shortcode` | `str` | Shortcode from the post URL (after /p/ or /reel/) |
+
+### ScavioInstagramPostComments
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `shortcode` | `str` | Post shortcode (provide this or `url`) |
+| `url` | `str` | Full Instagram post or reel URL |
+| `cursor` | `str` | Pagination cursor |
+| `sort_order` | `str` | popular (default) or newest |
+
+### ScavioInstagramCommentReplies
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `media_id` | `str` | Numeric media ID of the post |
+| `comment_id` | `str` | Comment ID from the post comments endpoint |
+| `cursor` | `str` | Pagination cursor |
+
+### ScavioInstagramSearchUsers / ScavioInstagramSearchHashtags
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `keyword` | `str` | Search query (1-500 chars) |
+| `cursor` | `str` | Pagination cursor |
+
 ## Error Handling
 
 - Empty results raise `ToolException` with actionable suggestions for the LLM
@@ -434,6 +536,18 @@ ScavioBaseAPIWrapper                      # Auth, headers, sync/async HTTP POST
   +-- ScavioTikTokHashtagVideosAPIWrapper # -> /api/v1/tiktok/hashtag/videos
   +-- ScavioTikTokUserFollowersAPIWrapper # -> /api/v1/tiktok/user/followers
   +-- ScavioTikTokUserFollowingsAPIWrapper# -> /api/v1/tiktok/user/followings
+  +-- ScavioInstagramProfileAPIWrapper        # -> /api/v1/instagram/profile
+  +-- ScavioInstagramUserPostsAPIWrapper      # -> /api/v1/instagram/user/posts
+  +-- ScavioInstagramUserReelsAPIWrapper      # -> /api/v1/instagram/user/reels
+  +-- ScavioInstagramTaggedPostsAPIWrapper    # -> /api/v1/instagram/user/tagged
+  +-- ScavioInstagramStoriesAPIWrapper        # -> /api/v1/instagram/user/stories
+  +-- ScavioInstagramPostAPIWrapper           # -> /api/v1/instagram/post
+  +-- ScavioInstagramPostCommentsAPIWrapper   # -> /api/v1/instagram/post/comments
+  +-- ScavioInstagramCommentRepliesAPIWrapper # -> /api/v1/instagram/post/comments/replies
+  +-- ScavioInstagramSearchUsersAPIWrapper    # -> /api/v1/instagram/search/users
+  +-- ScavioInstagramSearchHashtagsAPIWrapper # -> /api/v1/instagram/search/hashtags
+  +-- ScavioInstagramUserFollowersAPIWrapper  # -> /api/v1/instagram/user/followers
+  +-- ScavioInstagramUserFollowingsAPIWrapper # -> /api/v1/instagram/user/followings
 ```
 
 Each tool splits parameters into **init-only** (developer-controlled, e.g. `max_results`, `domain`) and **LLM-controllable** (passed via `args_schema` at invocation time, e.g. `query`, `sort_by`).

@@ -3,6 +3,20 @@
 from importlib import metadata
 
 from langchain_scavio.scavio_amazon import ScavioAmazonProduct, ScavioAmazonSearch
+from langchain_scavio.scavio_instagram import (
+    ScavioInstagramCommentReplies,
+    ScavioInstagramPost,
+    ScavioInstagramPostComments,
+    ScavioInstagramProfile,
+    ScavioInstagramSearchHashtags,
+    ScavioInstagramSearchUsers,
+    ScavioInstagramStories,
+    ScavioInstagramTaggedPosts,
+    ScavioInstagramUserFollowers,
+    ScavioInstagramUserFollowings,
+    ScavioInstagramUserPosts,
+    ScavioInstagramUserReels,
+)
 from langchain_scavio.scavio_reddit import ScavioRedditPost, ScavioRedditSearch
 from langchain_scavio.scavio_search import ScavioSearch
 from langchain_scavio.scavio_tiktok import (
@@ -51,5 +65,17 @@ __all__ = [
     "ScavioTikTokHashtagVideos",
     "ScavioTikTokUserFollowers",
     "ScavioTikTokUserFollowings",
+    "ScavioInstagramProfile",
+    "ScavioInstagramUserPosts",
+    "ScavioInstagramUserReels",
+    "ScavioInstagramTaggedPosts",
+    "ScavioInstagramStories",
+    "ScavioInstagramPost",
+    "ScavioInstagramPostComments",
+    "ScavioInstagramCommentReplies",
+    "ScavioInstagramSearchUsers",
+    "ScavioInstagramSearchHashtags",
+    "ScavioInstagramUserFollowers",
+    "ScavioInstagramUserFollowings",
     "__version__",
 ]
