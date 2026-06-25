@@ -152,8 +152,10 @@ class ScavioInstagramProfile(BaseTool):  # type: ignore[override]
         self, raw: dict[str, Any], identifier: str
     ) -> dict[str, Any]:
         data = raw.get("data") or {}
-        user = data.get("user") if isinstance(data, dict) else None
-        if not user:
+        found = isinstance(data, dict) and (
+            data.get("pk") or data.get("username") or data.get("id")
+        )
+        if not found:
             raise ToolException(
                 f"No Instagram user found for '{identifier}'. "
                 "Check the username or user_id and try again."
@@ -305,10 +307,10 @@ class ScavioInstagramUserPosts(BaseTool):  # type: ignore[override]
         self, raw: dict[str, Any], identifier: str
     ) -> dict[str, Any]:
         data = raw.get("data") or {}
-        posts = data.get("posts") if isinstance(data, dict) else None
-        if self.max_results and posts:
-            raw["data"]["posts"] = posts[: self.max_results]
-        if not (isinstance(data, dict) and data.get("posts")):
+        items = data.get("items") if isinstance(data, dict) else None
+        if self.max_results and items:
+            raw["data"]["items"] = items[: self.max_results]
+        if not (isinstance(data, dict) and data.get("items")):
             raise ToolException(
                 f"No posts found for Instagram user '{identifier}'. "
                 "Verify the username or user_id is correct."
@@ -460,10 +462,10 @@ class ScavioInstagramUserReels(BaseTool):  # type: ignore[override]
         self, raw: dict[str, Any], identifier: str
     ) -> dict[str, Any]:
         data = raw.get("data") or {}
-        reels = data.get("reels") if isinstance(data, dict) else None
-        if self.max_results and reels:
-            raw["data"]["reels"] = reels[: self.max_results]
-        if not (isinstance(data, dict) and data.get("reels")):
+        items = data.get("items") if isinstance(data, dict) else None
+        if self.max_results and items:
+            raw["data"]["items"] = items[: self.max_results]
+        if not (isinstance(data, dict) and data.get("items")):
             raise ToolException(
                 f"No reels found for Instagram user '{identifier}'. "
                 "Verify the username or user_id is correct."
@@ -615,10 +617,10 @@ class ScavioInstagramTaggedPosts(BaseTool):  # type: ignore[override]
         self, raw: dict[str, Any], identifier: str
     ) -> dict[str, Any]:
         data = raw.get("data") or {}
-        posts = data.get("posts") if isinstance(data, dict) else None
-        if self.max_results and posts:
-            raw["data"]["posts"] = posts[: self.max_results]
-        if not (isinstance(data, dict) and data.get("posts")):
+        items = data.get("items") if isinstance(data, dict) else None
+        if self.max_results and items:
+            raw["data"]["items"] = items[: self.max_results]
+        if not (isinstance(data, dict) and data.get("items")):
             raise ToolException(
                 f"No tagged posts found for Instagram user '{identifier}'. "
                 "Verify the username or user_id is correct."
@@ -733,7 +735,7 @@ class ScavioInstagramStories(BaseTool):  # type: ignore[override]
         self, raw: dict[str, Any], identifier: str
     ) -> dict[str, Any]:
         data = raw.get("data") or {}
-        if not (isinstance(data, dict) and data.get("stories")):
+        if not (isinstance(data, dict) and data.get("items")):
             raise ToolException(
                 f"No active stories found for Instagram user '{identifier}'. "
                 "The user may have no active stories right now."
@@ -857,8 +859,10 @@ class ScavioInstagramPost(BaseTool):  # type: ignore[override]
         self, raw: dict[str, Any], identifier: str
     ) -> dict[str, Any]:
         data = raw.get("data") or {}
-        post = data.get("post") if isinstance(data, dict) else None
-        if not post:
+        found = isinstance(data, dict) and (
+            data.get("pk") or data.get("shortcode") or data.get("id")
+        )
+        if not found:
             raise ToolException(
                 f"No Instagram post found for '{identifier}'. "
                 "Check the url, media_id, or shortcode and try again."
@@ -1151,10 +1155,10 @@ class ScavioInstagramCommentReplies(BaseTool):  # type: ignore[override]
         self, raw: dict[str, Any], comment_id: str
     ) -> dict[str, Any]:
         data = raw.get("data") or {}
-        comments = data.get("comments") if isinstance(data, dict) else None
-        if self.max_results and comments:
-            raw["data"]["comments"] = comments[: self.max_results]
-        if not (isinstance(data, dict) and data.get("comments")):
+        replies = data.get("child_comments") if isinstance(data, dict) else None
+        if self.max_results and replies:
+            raw["data"]["child_comments"] = replies[: self.max_results]
+        if not (isinstance(data, dict) and data.get("child_comments")):
             raise ToolException(
                 f"No replies found for comment '{comment_id}'. "
                 "The comment may have no replies yet."
@@ -1565,10 +1569,10 @@ class ScavioInstagramUserFollowers(BaseTool):  # type: ignore[override]
         self, raw: dict[str, Any], identifier: str
     ) -> dict[str, Any]:
         data = raw.get("data") or {}
-        followers = data.get("followers") if isinstance(data, dict) else None
-        if self.max_results and followers:
-            raw["data"]["followers"] = followers[: self.max_results]
-        if not (isinstance(data, dict) and data.get("followers")):
+        users = data.get("users") if isinstance(data, dict) else None
+        if self.max_results and users:
+            raw["data"]["users"] = users[: self.max_results]
+        if not (isinstance(data, dict) and data.get("users")):
             raise ToolException(
                 f"No followers found for Instagram user '{identifier}'. "
                 "Verify the username or user_id is correct."
@@ -1721,10 +1725,10 @@ class ScavioInstagramUserFollowings(BaseTool):  # type: ignore[override]
         self, raw: dict[str, Any], identifier: str
     ) -> dict[str, Any]:
         data = raw.get("data") or {}
-        followings = data.get("followings") if isinstance(data, dict) else None
-        if self.max_results and followings:
-            raw["data"]["followings"] = followings[: self.max_results]
-        if not (isinstance(data, dict) and data.get("followings")):
+        users = data.get("users") if isinstance(data, dict) else None
+        if self.max_results and users:
+            raw["data"]["users"] = users[: self.max_results]
+        if not (isinstance(data, dict) and data.get("users")):
             raise ToolException(
                 f"No followings found for Instagram user '{identifier}'. "
                 "Verify the username or user_id is correct."
