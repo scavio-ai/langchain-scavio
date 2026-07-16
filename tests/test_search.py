@@ -13,11 +13,13 @@ from langchain_scavio._utilities import SCAVIO_API_URL
 from .conftest import (
     MOCK_API_KEY,
     make_error_response,
-    make_full_response,
-    make_light_response,
+    make_google_v2_full_response,
+    make_google_v2_response,
+    make_normalized_google_response,
 )
 
-API_ENDPOINT = f"{SCAVIO_API_URL}/api/v1/google"
+API_ENDPOINT = f"{SCAVIO_API_URL}/api/v2/google"
+NEWS_ENDPOINT = f"{SCAVIO_API_URL}/api/v2/google/news"
 
 
 class TestInstantiation:
@@ -72,7 +74,7 @@ class TestRun:
         responses.add(
             responses.POST,
             API_ENDPOINT,
-            json=make_light_response(),
+            json=make_google_v2_response(),
             status=200,
         )
         result = tool.invoke({"query": "python frameworks"})
@@ -85,7 +87,7 @@ class TestRun:
         responses.add(
             responses.POST,
             API_ENDPOINT,
-            json=make_light_response(),
+            json=make_google_v2_response(),
             status=200,
         )
         result = tool.invoke({"query": "test"})
@@ -96,7 +98,7 @@ class TestRun:
         responses.add(
             responses.POST,
             API_ENDPOINT,
-            json=make_full_response(),
+            json=make_google_v2_full_response(),
             status=200,
         )
         result = full_tool.invoke({"query": "test"})
@@ -112,7 +114,7 @@ class TestRun:
         responses.add(
             responses.POST,
             API_ENDPOINT,
-            json=make_full_response(),
+            json=make_google_v2_full_response(),
             status=200,
         )
         result = tool.invoke({"query": "test"})
@@ -126,7 +128,7 @@ class TestRun:
         responses.add(
             responses.POST,
             API_ENDPOINT,
-            json=make_full_response(),
+            json=make_google_v2_full_response(),
             status=200,
         )
         result = tool.invoke({"query": "test"})
@@ -137,7 +139,7 @@ class TestRun:
         responses.add(
             responses.POST,
             API_ENDPOINT,
-            json=make_full_response(),
+            json=make_google_v2_full_response(),
             status=200,
         )
         result = tool.invoke({"query": "test"})
@@ -150,7 +152,7 @@ class TestRun:
         responses.add(
             responses.POST,
             API_ENDPOINT,
-            json=make_light_response(results=[]),
+            json=make_google_v2_response(organic_results=[]),
             status=200,
         )
         # handle_tool_error=True means ToolException is caught by LangChain
@@ -168,32 +170,33 @@ class TestRun:
         assert "error" in str(result).lower()
 
     @responses.activate
-    def test_search_type_forwarded(self, tool: ScavioSearch) -> None:
-        import json as json_mod
-
+    def test_search_type_news_routes_to_news_endpoint(
+        self, tool: ScavioSearch
+    ) -> None:
         responses.add(
             responses.POST,
-            API_ENDPOINT,
-            json=make_light_response(),
+            NEWS_ENDPOINT,
+            json={"news_results": [{"title": "n1"}], "credits_used": 1},
             status=200,
         )
-        tool.invoke({"query": "latest news", "search_type": "news"})
-        body = json_mod.loads(responses.calls[0].request.body)
-        assert body["search_type"] == "news"
+        result = tool.invoke({"query": "latest news", "search_type": "news"})
+        assert responses.calls[0].request.url == NEWS_ENDPOINT
+        assert result["results"] == [{"title": "n1"}]
 
     @responses.activate
-    def test_country_code_forwarded(self, tool: ScavioSearch) -> None:
+    def test_country_code_forwarded_as_gl(self, tool: ScavioSearch) -> None:
         import json as json_mod
 
         responses.add(
             responses.POST,
             API_ENDPOINT,
-            json=make_light_response(),
+            json=make_google_v2_response(),
             status=200,
         )
         tool.invoke({"query": "restaurants", "country_code": "fr"})
         body = json_mod.loads(responses.calls[0].request.body)
-        assert body["country_code"] == "fr"
+        assert body["gl"] == "fr"
+        assert "country_code" not in body
 
 
 class TestForbiddenParams:
@@ -207,9 +210,11 @@ class TestForbiddenParams:
 
 
 class TestAsync:
+    # raw_results_async is patched directly, so mocks return the normalized
+    # shape (what the wrapper emits), not the v2 wire shape.
     @pytest.mark.asyncio
     async def test_async_search(self, tool: ScavioSearch) -> None:
-        mock_resp = make_light_response()
+        mock_resp = make_normalized_google_response()
         with patch(
             "langchain_scavio._utilities.ScavioSearchAPIWrapper.raw_results_async",
             new_callable=AsyncMock,
@@ -221,7 +226,7 @@ class TestAsync:
 
     @pytest.mark.asyncio
     async def test_async_empty_results(self, tool: ScavioSearch) -> None:
-        mock_resp = make_light_response(results=[])
+        mock_resp = make_normalized_google_response(results=[])
         with patch(
             "langchain_scavio._utilities.ScavioSearchAPIWrapper.raw_results_async",
             new_callable=AsyncMock,

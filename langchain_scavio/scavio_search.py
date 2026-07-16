@@ -49,7 +49,7 @@ class ScavioSearchInput(BaseModel):
 
     query: str = Field(description="Search query to look up")
 
-    search_type: Optional[Literal["classic", "news", "maps", "images", "lens"]] = (
+    search_type: Optional[Literal["classic", "news", "maps"]] = (
         Field(
             default=None,
             description=(
@@ -58,8 +58,7 @@ class ScavioSearchInput(BaseModel):
                 '"latest" or "recent" general information. '
                 'Use "news" ONLY for politics, sports, or major current events '
                 'covered by mainstream media. '
-                'Use "maps" for local businesses, restaurants, or place lookups. '
-                'Use "images" when the user explicitly asks for visual results.'
+                'Use "maps" for local businesses, restaurants, or place lookups.'
             ),
         )
     )
@@ -180,6 +179,8 @@ class ScavioSearch(BaseTool):  # type: ignore[override]
 
     # Instantiation-only parameters (not controllable by the LLM).
     max_results: Optional[int] = 5
+    # Deprecated: ignored since 2.11 (Google v2 always returns full results
+    # for 1 credit). Kept so existing configs keep working.
     light_request: Optional[bool] = None
     include_knowledge_graph: bool = True
     include_questions: bool = True

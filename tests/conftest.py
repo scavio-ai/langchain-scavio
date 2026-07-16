@@ -31,37 +31,33 @@ from langchain_scavio.scavio_youtube import (
 MOCK_API_KEY = "sk_live_test_key_12345"
 
 
-def make_light_response(**overrides: Any) -> dict[str, Any]:
-    """Build a minimal light-mode API response."""
+def make_google_v2_response(**overrides: Any) -> dict[str, Any]:
+    """Build a minimal Google v2 API response (wire shape)."""
     base: dict[str, Any] = {
-        "query": "test query",
-        "page": 1,
-        "country_code": "",
-        "language": "",
-        "response_time": 0.45,
-        "credits_used": 1,
-        "credits_remaining": 999,
-        "results": [
+        "search_information": {"total_results": 1250000},
+        "organic_results": [
             {
-                "title": f"Result {i}",
-                "url": f"https://example.com/{i}",
-                "description": f"Description for result {i}",
                 "position": i,
+                "title": f"Result {i}",
+                "link": f"https://example.com/{i}",
+                "snippet": f"Description for result {i}",
             }
             for i in range(1, 11)
         ],
+        "response_time": 0.45,
+        "credits_used": 1,
+        "credits_remaining": 999,
+        "cached": False,
     }
     base.update(overrides)
     return base
 
 
-def make_full_response(**overrides: Any) -> dict[str, Any]:
-    """Build a full-mode API response with all optional fields."""
-    base = make_light_response(credits_used=2)
+def make_google_v2_full_response(**overrides: Any) -> dict[str, Any]:
+    """Build a Google v2 API response with all optional blocks."""
+    base = make_google_v2_response()
     base.update(
         {
-            "total_results": 1250000,
-            "search_url": "https://www.google.com/search?q=test+query",
             "knowledge_graph": {
                 "title": "Test Subject",
                 "subtitle": "A test entity",
@@ -70,20 +66,41 @@ def make_full_response(**overrides: Any) -> dict[str, Any]:
                     {"title": "Headquarters", "content": "San Francisco"},
                 ],
             },
-            "questions": [
+            "related_questions": [
                 {
                     "question": "What is test subject?",
                     "answer": "Test subject is an entity used for testing.",
                 },
             ],
-            "related_queries": [
-                {"title": "test subject reviews", "position": 0,
-                 "link": "test subject reviews"},
-                {"title": "test subject alternatives", "position": 1,
-                 "link": "test subject alternatives"},
+            "related_searches": [
+                {"query": "test subject reviews", "position": 0},
+                {"query": "test subject alternatives", "position": 1},
             ],
         }
     )
+    base.update(overrides)
+    return base
+
+
+def make_normalized_google_response(**overrides: Any) -> dict[str, Any]:
+    """Build a normalized Google response (what raw_results returns)."""
+    base: dict[str, Any] = {
+        "query": "test query",
+        "page": 1,
+        "response_time": 0.45,
+        "credits_used": 1,
+        "credits_remaining": 999,
+        "results": [
+            {
+                "position": i,
+                "title": f"Result {i}",
+                "url": f"https://example.com/{i}",
+                "domain": "example.com",
+                "content": f"Description for result {i}",
+            }
+            for i in range(1, 11)
+        ],
+    }
     base.update(overrides)
     return base
 
