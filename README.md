@@ -138,13 +138,13 @@ from langchain_scavio import ScavioSearch
 tool = ScavioSearch(
     scavio_api_key="sk_live_...",       # or SCAVIO_API_KEY env var
     max_results=5,
-    light_request=None,                  # None=light/1 credit, False=full/2 credits
+    light_request=None,                  # deprecated, ignored (v2 always full, 1 credit)
     include_knowledge_graph=True,
     include_questions=True,
     include_related=False,
     country_code="us",
     language="en",
-    search_type="classic",               # classic|news|maps|images|lens
+    search_type="classic",               # classic|news|maps
     device="desktop",
 )
 ```
@@ -322,7 +322,7 @@ result = search_hashtags.invoke({"keyword": "travel"})
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `query` | `str` | Search query |
-| `search_type` | `classic\|news\|maps\|images\|lens` | Type of search |
+| `search_type` | `classic\|news\|maps` | Type of search |
 | `country_code` | `str` | ISO 3166-1 alpha-2 |
 | `language` | `str` | ISO 639-1 |
 | `device` | `desktop\|mobile` | Device type |
@@ -516,7 +516,7 @@ result = search_hashtags.invoke({"keyword": "travel"})
 
 ```
 ScavioBaseAPIWrapper                      # Auth, headers, sync/async HTTP POST
-  +-- ScavioSearchAPIWrapper              # -> /api/v1/google
+  +-- ScavioSearchAPIWrapper              # -> /api/v2/google (+ news, maps)
   +-- ScavioAmazonSearchAPIWrapper        # -> /api/v1/amazon/search
   +-- ScavioAmazonProductAPIWrapper       # -> /api/v1/amazon/product
   +-- ScavioWalmartSearchAPIWrapper       # -> /api/v1/walmart/search

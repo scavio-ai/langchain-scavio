@@ -21,9 +21,11 @@ from langchain_scavio._utilities import (
     _RateLimiter,
 )
 
-from .conftest import MOCK_API_KEY, make_error_response, make_light_response
+from .conftest import MOCK_API_KEY, make_error_response, make_google_v2_response
 
-API_ENDPOINT = f"{SCAVIO_API_URL}/api/v1/google"
+API_ENDPOINT = f"{SCAVIO_API_URL}/api/v2/google"
+NEWS_ENDPOINT = f"{SCAVIO_API_URL}/api/v2/google/news"
+MAPS_ENDPOINT = f"{SCAVIO_API_URL}/api/v2/google/maps/search"
 
 
 class TestValidation:
@@ -52,25 +54,29 @@ class TestValidation:
             scavio_api_key=MOCK_API_KEY,
             api_base_url="https://custom.api.dev",
         )
-        assert wrapper._build_url() == "https://custom.api.dev/api/v1/google"
+        assert wrapper._build_url() == "https://custom.api.dev/api/v2/google"
 
 
 class TestSyncRequests:
     @responses.activate
     def test_successful_search(self) -> None:
-        mock_resp = make_light_response()
+        mock_resp = make_google_v2_response()
         responses.add(
             responses.POST, API_ENDPOINT, json=mock_resp, status=200
         )
         wrapper = ScavioSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
         result = wrapper.raw_results(query="test")
-        assert result["query"] == "test query"
+        assert result["query"] == "test"
         assert len(result["results"]) == 10
+        first = result["results"][0]
+        assert first["url"] == "https://example.com/1"
+        assert first["domain"] == "example.com"
+        assert first["content"] == "Description for result 1"
 
     @responses.activate
     def test_sends_correct_headers(self) -> None:
         responses.add(
-            responses.POST, API_ENDPOINT, json=make_light_response(), status=200
+            responses.POST, API_ENDPOINT, json=make_google_v2_response(), status=200
         )
         wrapper = ScavioSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
         wrapper.raw_results(query="test")
@@ -82,34 +88,92 @@ class TestSyncRequests:
     @responses.activate
     def test_filters_none_params(self) -> None:
         responses.add(
-            responses.POST, API_ENDPOINT, json=make_light_response(), status=200
+            responses.POST, API_ENDPOINT, json=make_google_v2_response(), status=200
         )
         wrapper = ScavioSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
         wrapper.raw_results(query="test", country_code=None, language=None)
         body = json.loads(responses.calls[0].request.body)
-        assert "country_code" not in body
-        assert "language" not in body
+        assert "gl" not in body
+        assert "hl" not in body
         assert body["query"] == "test"
 
     @responses.activate
-    def test_light_request_none_excluded(self) -> None:
+    def test_country_code_translated_to_gl(self) -> None:
         responses.add(
-            responses.POST, API_ENDPOINT, json=make_light_response(), status=200
+            responses.POST, API_ENDPOINT, json=make_google_v2_response(), status=200
         )
         wrapper = ScavioSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
-        wrapper.raw_results(query="test", light_request=None)
+        wrapper.raw_results(query="test", country_code="fr", language="fr")
         body = json.loads(responses.calls[0].request.body)
-        assert "light_request" not in body
+        assert body["gl"] == "fr"
+        assert body["hl"] == "fr"
+        assert "country_code" not in body
+        assert "language" not in body
 
     @responses.activate
-    def test_light_request_false_included(self) -> None:
+    def test_page_translated_to_start(self) -> None:
         responses.add(
-            responses.POST, API_ENDPOINT, json=make_light_response(), status=200
+            responses.POST, API_ENDPOINT, json=make_google_v2_response(), status=200
         )
         wrapper = ScavioSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
-        wrapper.raw_results(query="test", light_request=False)
+        result = wrapper.raw_results(query="test", page=3)
         body = json.loads(responses.calls[0].request.body)
-        assert body["light_request"] is False
+        assert body["start"] == 20
+        assert "page" not in body
+        assert result["page"] == 3
+
+    @responses.activate
+    def test_light_request_never_sent(self) -> None:
+        for _ in range(2):
+            responses.add(
+                responses.POST,
+                API_ENDPOINT,
+                json=make_google_v2_response(),
+                status=200,
+            )
+        wrapper = ScavioSearchAPIWrapper(
+            scavio_api_key=MOCK_API_KEY, max_requests_per_second=10
+        )
+        wrapper.raw_results(query="test", light_request=None)
+        wrapper.raw_results(query="test", light_request=False)
+        for call in responses.calls:
+            assert "light_request" not in json.loads(call.request.body)
+
+    @responses.activate
+    def test_news_search_type_routes_to_news_endpoint(self) -> None:
+        responses.add(
+            responses.POST,
+            NEWS_ENDPOINT,
+            json={"news_results": [{"title": "n1"}], "credits_used": 1},
+            status=200,
+        )
+        wrapper = ScavioSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        result = wrapper.raw_results(query="test", search_type="news")
+        body = json.loads(responses.calls[0].request.body)
+        assert "search_type" not in body
+        assert result["results"] == [{"title": "n1"}]
+
+    @responses.activate
+    def test_maps_search_type_routes_to_maps_endpoint(self) -> None:
+        responses.add(
+            responses.POST,
+            MAPS_ENDPOINT,
+            json={"places": [{"title": "p1"}], "credits_used": 1},
+            status=200,
+        )
+        wrapper = ScavioSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        result = wrapper.raw_results(query="pizza", search_type="maps")
+        assert result["results"] == [{"title": "p1"}]
+        assert result["maps_results"] == [{"title": "p1"}]
+
+    @responses.activate
+    def test_images_search_type_falls_back_to_classic(self) -> None:
+        responses.add(
+            responses.POST, API_ENDPOINT, json=make_google_v2_response(), status=200
+        )
+        wrapper = ScavioSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        result = wrapper.raw_results(query="test", search_type="images")
+        assert len(result["results"]) == 10
 
     @responses.activate
     def test_401_raises_value_error(self) -> None:
@@ -141,7 +205,9 @@ class TestSyncRequests:
 class TestWrapperURLs:
     def test_search_wrapper_default_url(self) -> None:
         w = ScavioSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
-        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/google"
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v2/google"
+        assert w._build_url("news") == f"{SCAVIO_API_URL}/api/v2/google/news"
+        assert w._build_url("maps") == f"{SCAVIO_API_URL}/api/v2/google/maps/search"
 
     def test_amazon_search_wrapper_url(self) -> None:
         w = ScavioAmazonSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
@@ -184,7 +250,7 @@ class TestWrapperURLs:
 class TestAsyncRequests:
     @pytest.mark.asyncio
     async def test_successful_async_search(self) -> None:
-        mock_resp = make_light_response()
+        mock_resp = make_google_v2_response()
         wrapper = ScavioSearchAPIWrapper(scavio_api_key=MOCK_API_KEY)
 
         mock_response = AsyncMock()
@@ -205,7 +271,8 @@ class TestAsyncRequests:
             return_value=mock_session_ctx,
         ):
             result = await wrapper.raw_results_async(query="test")
-            assert result["query"] == "test query"
+            assert result["query"] == "test"
+            assert len(result["results"]) == 10
 
     @pytest.mark.asyncio
     async def test_async_error_raises(self) -> None:
@@ -285,7 +352,7 @@ class TestRateLimiter:
     def test_rate_limiter_applied_to_sync_requests(self) -> None:
         for _ in range(3):
             responses.add(
-                responses.POST, API_ENDPOINT, json=make_light_response(), status=200
+                responses.POST, API_ENDPOINT, json=make_google_v2_response(), status=200
             )
         wrapper = ScavioSearchAPIWrapper(
             scavio_api_key=MOCK_API_KEY, max_requests_per_second=2
