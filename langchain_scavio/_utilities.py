@@ -203,7 +203,7 @@ class ScavioBaseAPIWrapper(BaseModel):
 
 
 # Google v2 endpoints, routed by the v1-style search_type parameter.
-# v1 (/api/v1/google) retired on 2026-07-20; v2 splits surfaces into
+# v1 (/api/v1/google) retires on 2026-08-04; v2 splits surfaces into
 # dedicated endpoints and returns Google's own response structure.
 _V2_GOOGLE_PATHS = {
     "classic": "/api/v2/google",
