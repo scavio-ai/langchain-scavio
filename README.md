@@ -16,6 +16,8 @@ Get your free API key at [dashboard.scavio.dev](https://dashboard.scavio.dev/).
 
 ## Why Scavio over Tavily?
 
+Scavio is a full [Tavily alternative](https://scavio.dev/alternatives/tavily) built for multi-platform agents — here is [Tavily vs Scavio](https://scavio.dev/compare/tavily/vs-scavio) at a glance:
+
 | | Scavio | Tavily | SerpAPI |
 |---|---|---|---|
 | **Platforms** | Google, Amazon, Walmart, YouTube, Reddit, TikTok, Instagram | Google only | Google + others |
@@ -562,7 +564,7 @@ Each tool splits parameters into **init-only** (developer-controlled, e.g. `max_
 + tool = ScavioSearch(max_results=5)
 ```
 
-See the full [migration guide](.docs/tavily-migration.md) for parameter mapping and feature comparison.
+See the full [migration guide](.docs/tavily-migration.md) for parameter mapping and feature comparison, or read more on [migrating from Tavily](https://scavio.dev/alternatives/tavily).
 
 ## License
 
@@ -571,11 +573,11 @@ MIT
 
 ## About Scavio
 
-[Scavio](https://scavio.dev) is a unified [search API](https://scavio.dev/docs/search-api) built for AI agents — one API key, structured JSON, no scraping or proxies. A real-time [Tavily alternative](https://scavio.dev) and [SerpAPI alternative](https://scavio.dev) with data from:
+[Scavio](https://scavio.dev) is a unified [search API for AI agents](https://scavio.dev/search-api-for-ai-agents) — one API key, structured JSON, no scraping or proxies. A real-time [Tavily alternative](https://scavio.dev/alternatives/tavily) and [SerpAPI alternative](https://scavio.dev/alternatives/serpapi) with data from:
 
-- [Google Search API](https://scavio.dev/docs/search-api) — SERP results, news, images, maps, and knowledge graph
-- [Amazon Product API](https://scavio.dev/docs/amazon-api) and [Walmart API](https://scavio.dev/docs/walmart-api) — product search and details
-- [YouTube API](https://scavio.dev/docs/youtube-api), [TikTok API](https://scavio.dev/docs/tiktok-api), and [Instagram API](https://scavio.dev/docs/instagram-api) — video and social media data
-- [Reddit API](https://scavio.dev/docs/reddit-api) — posts and threaded comments
+- [Google Search API](https://scavio.dev/google-search-api) — SERP results, news, images, maps, and knowledge graph
+- [Amazon Product API](https://scavio.dev/amazon-product-api) and [Walmart Product API](https://scavio.dev/walmart-product-api) — product search and details
+- [YouTube API](https://scavio.dev/youtube-transcript-api), [TikTok API](https://scavio.dev/tiktok-api), and [Instagram API](https://scavio.dev/instagram-api) — video and social media data
+- [Reddit API](https://scavio.dev/reddit-api) — posts and threaded comments
 
 Get a free [API key](https://dashboard.scavio.dev) and explore the [documentation](https://scavio.dev/docs/introduction).
