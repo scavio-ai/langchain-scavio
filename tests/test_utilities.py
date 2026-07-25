@@ -16,8 +16,14 @@ from langchain_scavio._utilities import (
     ScavioSearchAPIWrapper,
     ScavioWalmartProductAPIWrapper,
     ScavioWalmartSearchAPIWrapper,
+    ScavioYouTubeChannelAPIWrapper,
+    ScavioYouTubeChannelVideosAPIWrapper,
+    ScavioYouTubeCommentsAPIWrapper,
     ScavioYouTubeMetadataAPIWrapper,
     ScavioYouTubeSearchAPIWrapper,
+    ScavioYouTubeStreamsAPIWrapper,
+    ScavioYouTubeTranscriptAPIWrapper,
+    ScavioYouTubeVideoAPIWrapper,
     _RateLimiter,
 )
 
@@ -230,8 +236,35 @@ class TestWrapperURLs:
         assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/youtube/search"
 
     def test_youtube_metadata_wrapper_url(self) -> None:
+        # Metadata is a deprecated alias of the video endpoint.
         w = ScavioYouTubeMetadataAPIWrapper(scavio_api_key=MOCK_API_KEY)
-        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/youtube/metadata"
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/youtube/video"
+
+    def test_youtube_video_wrapper_url(self) -> None:
+        w = ScavioYouTubeVideoAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/youtube/video"
+
+    def test_youtube_comments_wrapper_url(self) -> None:
+        w = ScavioYouTubeCommentsAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/youtube/comments"
+
+    def test_youtube_transcript_wrapper_url(self) -> None:
+        w = ScavioYouTubeTranscriptAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/youtube/transcript"
+
+    def test_youtube_channel_wrapper_url(self) -> None:
+        w = ScavioYouTubeChannelAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/youtube/channel"
+
+    def test_youtube_channel_videos_wrapper_url(self) -> None:
+        w = ScavioYouTubeChannelVideosAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert (
+            w._build_url() == f"{SCAVIO_API_URL}/api/v1/youtube/channel/videos"
+        )
+
+    def test_youtube_streams_wrapper_url(self) -> None:
+        w = ScavioYouTubeStreamsAPIWrapper(scavio_api_key=MOCK_API_KEY)
+        assert w._build_url() == f"{SCAVIO_API_URL}/api/v1/youtube/streams"
 
     def test_custom_base_url_propagates_to_all_wrappers(self) -> None:
         custom = "https://custom.api.dev"
@@ -242,6 +275,12 @@ class TestWrapperURLs:
             ScavioWalmartProductAPIWrapper,
             ScavioYouTubeSearchAPIWrapper,
             ScavioYouTubeMetadataAPIWrapper,
+            ScavioYouTubeVideoAPIWrapper,
+            ScavioYouTubeCommentsAPIWrapper,
+            ScavioYouTubeTranscriptAPIWrapper,
+            ScavioYouTubeChannelAPIWrapper,
+            ScavioYouTubeChannelVideosAPIWrapper,
+            ScavioYouTubeStreamsAPIWrapper,
         ):
             w = cls(scavio_api_key=MOCK_API_KEY, api_base_url=custom)
             assert w._build_url().startswith(custom)
@@ -375,6 +414,12 @@ class TestRateLimiter:
             ScavioWalmartProductAPIWrapper,
             ScavioYouTubeSearchAPIWrapper,
             ScavioYouTubeMetadataAPIWrapper,
+            ScavioYouTubeVideoAPIWrapper,
+            ScavioYouTubeCommentsAPIWrapper,
+            ScavioYouTubeTranscriptAPIWrapper,
+            ScavioYouTubeChannelAPIWrapper,
+            ScavioYouTubeChannelVideosAPIWrapper,
+            ScavioYouTubeStreamsAPIWrapper,
         ):
             w = cls(scavio_api_key=MOCK_API_KEY, max_requests_per_second=7)
             assert w.max_requests_per_second == 7

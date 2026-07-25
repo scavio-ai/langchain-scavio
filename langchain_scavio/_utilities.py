@@ -403,12 +403,64 @@ class ScavioYouTubeSearchAPIWrapper(ScavioBaseAPIWrapper):
         return f"{base}/api/v1/youtube/search"
 
 
-class ScavioYouTubeMetadataAPIWrapper(ScavioBaseAPIWrapper):
-    """Wrapper for the Scavio YouTube Metadata endpoint."""
+class ScavioYouTubeVideoAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio YouTube Video endpoint."""
 
     def _build_url(self) -> str:
         base = self.api_base_url or SCAVIO_API_URL
-        return f"{base}/api/v1/youtube/metadata"
+        return f"{base}/api/v1/youtube/video"
+
+
+class ScavioYouTubeMetadataAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the deprecated Scavio YouTube Metadata alias.
+
+    Metadata is a deprecated alias of the YouTube Video endpoint; both
+    resolve to ``/api/v1/youtube/video``.
+    """
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/video"
+
+
+class ScavioYouTubeCommentsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio YouTube Comments endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/comments"
+
+
+class ScavioYouTubeTranscriptAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio YouTube Transcript endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/transcript"
+
+
+class ScavioYouTubeChannelAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio YouTube Channel endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/channel"
+
+
+class ScavioYouTubeChannelVideosAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio YouTube Channel Videos endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/channel/videos"
+
+
+class ScavioYouTubeStreamsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio YouTube Streams endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/streams"
 
 
 class ScavioRedditSearchAPIWrapper(ScavioBaseAPIWrapper):

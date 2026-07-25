@@ -34,8 +34,14 @@ from langchain_scavio.scavio_tiktok import (
 )
 from langchain_scavio.scavio_walmart import ScavioWalmartProduct, ScavioWalmartSearch
 from langchain_scavio.scavio_youtube import (
+    ScavioYouTubeChannel,
+    ScavioYouTubeChannelVideos,
+    ScavioYouTubeComments,
     ScavioYouTubeMetadata,
     ScavioYouTubeSearch,
+    ScavioYouTubeStreams,
+    ScavioYouTubeTranscript,
+    ScavioYouTubeVideo,
 )
 
 try:
@@ -52,6 +58,12 @@ __all__ = [
     "ScavioWalmartProduct",
     "ScavioYouTubeSearch",
     "ScavioYouTubeMetadata",
+    "ScavioYouTubeVideo",
+    "ScavioYouTubeComments",
+    "ScavioYouTubeTranscript",
+    "ScavioYouTubeChannel",
+    "ScavioYouTubeChannelVideos",
+    "ScavioYouTubeStreams",
     "ScavioRedditSearch",
     "ScavioRedditPost",
     "ScavioTikTokProfile",
