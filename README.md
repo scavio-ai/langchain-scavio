@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-integration-blueviolet)](https://python.langchain.com/)
 
-**32 LangChain tools for real-time search across Google, Amazon, Walmart, YouTube, Reddit, TikTok, and Instagram** -- structured data with knowledge graphs, all through a single package.
+**38 LangChain tools for real-time search across Google, Amazon, Walmart, YouTube, Reddit, TikTok, and Instagram** -- structured data with knowledge graphs, all through a single package.
 
 ```bash
 pip install langchain-scavio
@@ -21,7 +21,7 @@ Scavio is a full [Tavily alternative](https://scavio.dev/alternatives/tavily) bu
 | | Scavio | Tavily | SerpAPI |
 |---|---|---|---|
 | **Platforms** | Google, Amazon, Walmart, YouTube, Reddit, TikTok, Instagram | Google only | Google + others |
-| **Tools** | 32 | 1 | 1 per wrapper |
+| **Tools** | 38 | 1 | 1 per wrapper |
 | **Knowledge graphs** | Yes | No | Partial |
 | **Product data** (price, rating, reviews) | Yes | No | No |
 | **Pricing** | $0.005/credit | $0.01/search | $0.05/search |
@@ -48,7 +48,7 @@ tool = ScavioSearch()
 result = tool.invoke({"query": "best python web frameworks 2026"})
 ```
 
-## All 32 Tools
+## All 38 Tools
 
 | Tool | Description |
 |------|-------------|
@@ -57,8 +57,14 @@ result = tool.invoke({"query": "best python web frameworks 2026"})
 | `ScavioAmazonProduct` | Fetch full details for an Amazon product by ASIN |
 | `ScavioWalmartSearch` | Search Walmart product listings with price/fulfillment filters |
 | `ScavioWalmartProduct` | Fetch full details for a Walmart product by ID |
-| `ScavioYouTubeSearch` | Search YouTube videos with duration/date/type filters |
-| `ScavioYouTubeMetadata` | Fetch metadata for a YouTube video by video ID |
+| `ScavioYouTubeSearch` | Search YouTube videos with duration/date/type/feature filters |
+| `ScavioYouTubeVideo` | Fetch full details for a YouTube video (chapters, captions) |
+| `ScavioYouTubeMetadata` | Deprecated alias of `ScavioYouTubeVideo` |
+| `ScavioYouTubeComments` | Fetch comments on a YouTube video with pagination |
+| `ScavioYouTubeTranscript` | Fetch a YouTube video transcript as text or SRT |
+| `ScavioYouTubeChannel` | Fetch channel details by ID, @handle, or URL |
+| `ScavioYouTubeChannelVideos` | Fetch a YouTube channel's uploaded videos |
+| `ScavioYouTubeStreams` | Fetch playable/downloadable stream URLs for a video |
 | `ScavioRedditSearch` | Search Reddit posts or comments with sort/pagination |
 | `ScavioRedditPost` | Fetch a Reddit post's metadata and comment thread by URL |
 | `ScavioTikTokProfile` | Look up a TikTok user profile by username or sec_user_id |
@@ -95,20 +101,21 @@ from langchain_scavio import (
     ScavioSearch,
     ScavioAmazonSearch, ScavioAmazonProduct,
     ScavioWalmartSearch,
-    ScavioYouTubeSearch, ScavioYouTubeMetadata,
+    ScavioYouTubeSearch, ScavioYouTubeVideo, ScavioYouTubeTranscript,
     ScavioRedditSearch, ScavioRedditPost,
     ScavioTikTokSearchVideos, ScavioTikTokProfile, ScavioTikTokVideo,
 )
 
 agent = create_agent(
-    "openai:gpt-4o",
+    "openai:gpt-5.5",
     tools=[
         ScavioSearch(max_results=5),
         ScavioAmazonSearch(max_results=5),
         ScavioAmazonProduct(),
         ScavioWalmartSearch(max_results=5),
         ScavioYouTubeSearch(max_results=5),
-        ScavioYouTubeMetadata(),
+        ScavioYouTubeVideo(),
+        ScavioYouTubeTranscript(),
         ScavioRedditSearch(max_results=5),
         ScavioRedditPost(),
         ScavioTikTokSearchVideos(max_results=5),
@@ -188,7 +195,11 @@ result = product.invoke({"product_id": "123456789"})
 ### YouTube
 
 ```python
-from langchain_scavio import ScavioYouTubeSearch, ScavioYouTubeMetadata
+from langchain_scavio import (
+    ScavioYouTubeSearch, ScavioYouTubeVideo, ScavioYouTubeComments,
+    ScavioYouTubeTranscript, ScavioYouTubeChannel,
+    ScavioYouTubeChannelVideos, ScavioYouTubeStreams,
+)
 
 search = ScavioYouTubeSearch(max_results=5)
 result = search.invoke({
@@ -197,10 +208,39 @@ result = search.invoke({
     "upload_date": "this_month",         # last_hour|today|this_week|this_month|this_year
     "sort_by": "view_count",             # relevance|date|view_count|rating
     "video_type": "video",               # video|channel|playlist
+    "features": ["hd", "subtitles"],     # hd|4k|subtitles|creative_commons|live|360|3d|hdr|vr180
 })
 
-metadata = ScavioYouTubeMetadata()
-result = metadata.invoke({"video_id": "dQw4w9WgXcQ"})
+# Paginate with the previous response's next_cursor
+next_page = search.invoke({
+    "query": "python tutorial",
+    "cursor": result["data"]["next_cursor"],
+})
+
+# Full video details (chapters, captions, keywords)
+video = ScavioYouTubeVideo()
+result = video.invoke({"video_id": "dQw4w9WgXcQ"})  # video ID or watch URL
+
+# Comments (paginate via data.next_cursor)
+comments = ScavioYouTubeComments(max_results=10)
+result = comments.invoke({"video_id": "dQw4w9WgXcQ"})
+
+# Transcript as plain text or timed SRT (8 credits per call)
+transcript = ScavioYouTubeTranscript()
+result = transcript.invoke({"video_id": "dQw4w9WgXcQ", "format": "text"})
+
+# Channel details and uploads
+channel = ScavioYouTubeChannel()
+result = channel.invoke({"channel_id": "@YouTube"})  # ID, @handle, or URL
+
+channel_videos = ScavioYouTubeChannelVideos(max_results=5)
+result = channel_videos.invoke({"channel_id": "UC_x5XG1OV2P6uZZ5FSM9Ttw"})
+
+# Playable/downloadable stream URLs (3 credits per call)
+streams = ScavioYouTubeStreams()
+result = streams.invoke({"video_id": "dQw4w9WgXcQ"})
+
+# ScavioYouTubeMetadata is a deprecated alias of ScavioYouTubeVideo
 ```
 
 ### Reddit
@@ -363,6 +403,48 @@ result = search_hashtags.invoke({"keyword": "travel"})
 | `duration` | `str` | short\|medium\|long |
 | `sort_by` | `str` | relevance\|date\|view_count\|rating |
 | `hd` / `subtitles` / `live` | `bool` | Content filters |
+| `features` | `list[str]` | hd\|4k\|subtitles\|creative_commons\|live\|360\|3d\|hdr\|vr180 |
+| `cursor` | `str` | Pagination cursor from a prior response's `next_cursor` |
+
+### ScavioYouTubeVideo / ScavioYouTubeMetadata
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `video_id` | `str` | YouTube video ID or watch URL |
+
+### ScavioYouTubeComments
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `video_id` | `str` | YouTube video ID or watch URL |
+| `cursor` | `str` | Pagination cursor from a prior response's `next_cursor` |
+
+### ScavioYouTubeTranscript
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `video_id` | `str` | YouTube video ID or watch URL |
+| `language` | `str` | Caption language code (ISO 639-1, default en) |
+| `format` | `str` | text (default) or srt |
+
+### ScavioYouTubeChannel
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `channel_id` | `str` | Channel ID, @handle, or channel URL |
+
+### ScavioYouTubeChannelVideos
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `channel_id` | `str` | Channel ID |
+| `cursor` | `str` | Pagination cursor from a prior response's `next_cursor` |
+
+### ScavioYouTubeStreams
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `video_id` | `str` | YouTube video ID or watch URL |
 
 ### ScavioRedditSearch
 
@@ -524,7 +606,13 @@ ScavioBaseAPIWrapper                      # Auth, headers, sync/async HTTP POST
   +-- ScavioWalmartSearchAPIWrapper       # -> /api/v1/walmart/search
   +-- ScavioWalmartProductAPIWrapper      # -> /api/v1/walmart/product
   +-- ScavioYouTubeSearchAPIWrapper       # -> /api/v1/youtube/search
-  +-- ScavioYouTubeMetadataAPIWrapper     # -> /api/v1/youtube/metadata
+  +-- ScavioYouTubeVideoAPIWrapper        # -> /api/v1/youtube/video
+  +-- ScavioYouTubeMetadataAPIWrapper     # -> /api/v1/youtube/video (deprecated alias)
+  +-- ScavioYouTubeCommentsAPIWrapper     # -> /api/v1/youtube/comments
+  +-- ScavioYouTubeTranscriptAPIWrapper   # -> /api/v1/youtube/transcript
+  +-- ScavioYouTubeChannelAPIWrapper      # -> /api/v1/youtube/channel
+  +-- ScavioYouTubeChannelVideosAPIWrapper# -> /api/v1/youtube/channel/videos
+  +-- ScavioYouTubeStreamsAPIWrapper      # -> /api/v1/youtube/streams
   +-- ScavioRedditSearchAPIWrapper        # -> /api/v1/reddit/search
   +-- ScavioRedditPostAPIWrapper          # -> /api/v1/reddit/post
   +-- ScavioTikTokProfileAPIWrapper       # -> /api/v1/tiktok/profile

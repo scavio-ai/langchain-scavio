@@ -24,8 +24,14 @@ from langchain_scavio.scavio_tiktok import (
 )
 from langchain_scavio.scavio_walmart import ScavioWalmartProduct, ScavioWalmartSearch
 from langchain_scavio.scavio_youtube import (
+    ScavioYouTubeChannel,
+    ScavioYouTubeChannelVideos,
+    ScavioYouTubeComments,
     ScavioYouTubeMetadata,
     ScavioYouTubeSearch,
+    ScavioYouTubeStreams,
+    ScavioYouTubeTranscript,
+    ScavioYouTubeVideo,
 )
 
 MOCK_API_KEY = "sk_live_test_key_12345"
@@ -254,27 +260,188 @@ def make_youtube_search_response(**overrides: Any) -> dict[str, Any]:
     return base
 
 
-def make_youtube_metadata_response(**overrides: Any) -> dict[str, Any]:
-    """Build a mock YouTube metadata API response."""
+def make_youtube_video_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock YouTube video API response (data is the video object)."""
     base: dict[str, Any] = {
         "data": {
+            "video_id": "dQw4w9WgXcQ",
             "title": "Test Video Title",
-            "description": "A test video description.",
-            "upload_date": "2026-01-15",
-            "duration": 330,
-            "view_count": 50000,
-            "like_count": 1200,
-            "comment_count": 340,
-            "categories": ["Education"],
-            "tags": ["python", "tutorial"],
+            "author": "Test Channel",
             "channel_id": "UCtest123",
             "channel_url": "https://www.youtube.com/channel/UCtest123",
-            "uploader": "Test Channel",
-            "age_limit": 0,
+            "published_at": "2026-01-15",
+            "description": "A test video description.",
+            "length_seconds": 330,
+            "view_count": 50000,
+            "keywords": ["python", "tutorial"],
+            "thumbnail": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+            "playability_status": "OK",
+            "chapters": [],
+            "captions": [
+                {
+                    "language_code": "en",
+                    "language_name": "English",
+                    "url": "https://www.youtube.com/api/timedtext?v=dQw4w9WgXcQ",
+                }
+            ],
         },
         "response_time": 0.35,
         "credits_used": 1,
         "credits_remaining": 999,
+    }
+    base.update(overrides)
+    return base
+
+
+def make_youtube_metadata_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock YouTube metadata API response (alias of the video shape)."""
+    return make_youtube_video_response(**overrides)
+
+
+def make_youtube_comments_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock YouTube comments API response (data.comments)."""
+    comments = [
+        {
+            "comment_id": f"UgxComment{i:04d}",
+            "text": f"Great video number {i}",
+            "like_count": 100 + i,
+            "reply_count": i % 3,
+            "published_time": "1 year ago",
+            "reply_cursor": f"reply_cursor_{i}",
+            "author": {
+                "channel_id": f"UCcommenter{i}",
+                "name": f"Commenter {i}",
+                "url": f"https://www.youtube.com/channel/UCcommenter{i}",
+                "avatar": f"https://yt3.ggpht.com/commenter{i}.jpg",
+                "is_verified": False,
+                "is_creator": i == 1,
+            },
+        }
+        for i in range(1, 21)
+    ]
+    base: dict[str, Any] = {
+        "data": {
+            "comments": comments,
+            "next_cursor": "eyJjb250aW51YXRpb24iOiJ0ZXN0In0=",
+            "has_more": True,
+        },
+        "response_time": 0.4,
+        "credits_used": 1,
+        "credits_remaining": 999,
+    }
+    base.update(overrides)
+    return base
+
+
+def make_youtube_transcript_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock YouTube transcript API response."""
+    base: dict[str, Any] = {
+        "data": {
+            "video_id": "dQw4w9WgXcQ",
+            "language_code": "en",
+            "language_name": "English",
+            "format": "txt",
+            "content": "Never gonna give you up, never gonna let you down.",
+        },
+        "response_time": 0.6,
+        "credits_used": 8,
+        "credits_remaining": 992,
+    }
+    base.update(overrides)
+    return base
+
+
+def make_youtube_channel_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock YouTube channel API response (data is the channel object)."""
+    base: dict[str, Any] = {
+        "data": {
+            "channel_id": "UC_x5XG1OV2P6uZZ5FSM9Ttw",
+            "title": "Test Channel",
+            "description": "A test channel description.",
+            "handle": "@TestChannel",
+            "url": "https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw",
+            "subscriber_count": 509000000,
+            "video_count": 993,
+            "view_count": 134561410625,
+            "country": "US",
+            "creation_date": "2015-05-01",
+            "verified": True,
+            "has_business_email": True,
+            "avatar": "https://yt3.ggpht.com/avatar.jpg",
+            "banner": "https://yt3.ggpht.com/banner.jpg",
+            "links": [{"name": "Website", "url": "https://example.com"}],
+        },
+        "response_time": 0.4,
+        "credits_used": 1,
+        "credits_remaining": 999,
+    }
+    base.update(overrides)
+    return base
+
+
+def make_youtube_channel_videos_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock YouTube channel videos API response (data.results)."""
+    results = [
+        {
+            "video_id": f"chvid{i:06d}",
+            "title": f"Channel Video {i}",
+            "url": f"https://www.youtube.com/watch?v=chvid{i:06d}",
+            "thumbnail": f"https://i.ytimg.com/vi/chvid{i:06d}/hqdefault.jpg",
+            "duration_text": "10:30",
+            "view_count": 79260000 + i,
+            "published_time": "3 weeks ago",
+            "is_live": False,
+        }
+        for i in range(1, 11)
+    ]
+    base: dict[str, Any] = {
+        "data": {
+            "channel_id": "UC_x5XG1OV2P6uZZ5FSM9Ttw",
+            "results": results,
+            "next_cursor": "eyJjb250aW51YXRpb24iOiJjaGFubmVsIn0=",
+            "has_more": True,
+        },
+        "response_time": 0.45,
+        "credits_used": 1,
+        "credits_remaining": 999,
+    }
+    base.update(overrides)
+    return base
+
+
+def make_youtube_streams_response(**overrides: Any) -> dict[str, Any]:
+    """Build a mock YouTube streams API response (data with formats)."""
+    base: dict[str, Any] = {
+        "data": {
+            "video_id": "dQw4w9WgXcQ",
+            "title": "Test Video Title",
+            "author": "Test Channel",
+            "length_seconds": 330,
+            "view_count": 50000,
+            "is_live": False,
+            "formats": [
+                {
+                    "itag": 22,
+                    "url": "https://rr1---sn-test.googlevideo.com/videoplayback",
+                    "mime_type": "video/mp4",
+                    "bitrate": 1500000,
+                    "width": 1280,
+                    "height": 720,
+                    "quality_label": "720p",
+                    "fps": 30,
+                    "audio_quality": "AUDIO_QUALITY_MEDIUM",
+                    "audio_sample_rate": 44100,
+                    "content_length": 12345678,
+                    "has_signature": False,
+                }
+            ],
+            "adaptive_formats": [],
+            "available_qualities": ["720p", "360p"],
+            "expires_in_seconds": 21540,
+        },
+        "response_time": 0.5,
+        "credits_used": 3,
+        "credits_remaining": 997,
     }
     base.update(overrides)
     return base
@@ -315,6 +482,42 @@ def youtube_search_tool() -> ScavioYouTubeSearch:
 def youtube_metadata_tool() -> ScavioYouTubeMetadata:
     """ScavioYouTubeMetadata with default settings and a test API key."""
     return ScavioYouTubeMetadata(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def youtube_video_tool() -> ScavioYouTubeVideo:
+    """ScavioYouTubeVideo with default settings and a test API key."""
+    return ScavioYouTubeVideo(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def youtube_comments_tool() -> ScavioYouTubeComments:
+    """ScavioYouTubeComments with default settings and a test API key."""
+    return ScavioYouTubeComments(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def youtube_transcript_tool() -> ScavioYouTubeTranscript:
+    """ScavioYouTubeTranscript with default settings and a test API key."""
+    return ScavioYouTubeTranscript(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def youtube_channel_tool() -> ScavioYouTubeChannel:
+    """ScavioYouTubeChannel with default settings and a test API key."""
+    return ScavioYouTubeChannel(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def youtube_channel_videos_tool() -> ScavioYouTubeChannelVideos:
+    """ScavioYouTubeChannelVideos with default settings and a test API key."""
+    return ScavioYouTubeChannelVideos(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def youtube_streams_tool() -> ScavioYouTubeStreams:
+    """ScavioYouTubeStreams with default settings and a test API key."""
+    return ScavioYouTubeStreams(scavio_api_key=MOCK_API_KEY)
 
 
 def make_reddit_search_response(**overrides: Any) -> dict[str, Any]:
