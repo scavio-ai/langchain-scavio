@@ -161,7 +161,7 @@ class ScavioSearch(BaseTool):  # type: ignore[override]
             from langchain_scavio import ScavioSearch
 
             agent = create_agent(
-                model=ChatOpenAI(model="gpt-4o"),
+                model=ChatOpenAI(model="gpt-5.5"),
                 tools=[ScavioSearch()],
                 system_prompt="You are a research assistant.",
             )
