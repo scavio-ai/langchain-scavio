@@ -32,6 +32,16 @@ from langchain_scavio.scavio_tiktok import (
     ScavioTikTokVideo,
     ScavioTikTokVideoComments,
 )
+from langchain_scavio.scavio_tiktok_shop import (
+    ScavioTikTokShopCategories,
+    ScavioTikTokShopCategoryProducts,
+    ScavioTikTokShopProduct,
+    ScavioTikTokShopProductReviews,
+    ScavioTikTokShopResolve,
+    ScavioTikTokShopSearch,
+    ScavioTikTokShopSearchSuggestions,
+    ScavioTikTokShopShopProducts,
+)
 from langchain_scavio.scavio_walmart import ScavioWalmartProduct, ScavioWalmartSearch
 from langchain_scavio.scavio_youtube import (
     ScavioYouTubeChannel,
@@ -77,6 +87,14 @@ __all__ = [
     "ScavioTikTokHashtagVideos",
     "ScavioTikTokUserFollowers",
     "ScavioTikTokUserFollowings",
+    "ScavioTikTokShopSearch",
+    "ScavioTikTokShopSearchSuggestions",
+    "ScavioTikTokShopProduct",
+    "ScavioTikTokShopProductReviews",
+    "ScavioTikTokShopCategories",
+    "ScavioTikTokShopCategoryProducts",
+    "ScavioTikTokShopShopProducts",
+    "ScavioTikTokShopResolve",
     "ScavioInstagramProfile",
     "ScavioInstagramUserPosts",
     "ScavioInstagramUserReels",

@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-integration-blueviolet)](https://python.langchain.com/)
 
-**38 LangChain tools for real-time search across Google, Amazon, Walmart, YouTube, Reddit, TikTok, and Instagram** -- structured data with knowledge graphs, all through a single package.
+**46 LangChain tools for real-time search across Google, Amazon, Walmart, YouTube, Reddit, TikTok, TikTok Shop, and Instagram** -- structured data with knowledge graphs, all through a single package.
 
 ```bash
 pip install langchain-scavio
@@ -20,8 +20,8 @@ Scavio is a full [Tavily alternative](https://scavio.dev/alternatives/tavily) bu
 
 | | Scavio | Tavily | SerpAPI |
 |---|---|---|---|
-| **Platforms** | Google, Amazon, Walmart, YouTube, Reddit, TikTok, Instagram | Google only | Google + others |
-| **Tools** | 38 | 1 | 1 per wrapper |
+| **Platforms** | Google, Amazon, Walmart, YouTube, Reddit, TikTok, TikTok Shop, Instagram | Google only | Google + others |
+| **Tools** | 46 | 1 | 1 per wrapper |
 | **Knowledge graphs** | Yes | No | Partial |
 | **Product data** (price, rating, reviews) | Yes | No | No |
 | **Pricing** | $0.005/credit | $0.01/search | $0.05/search |
@@ -48,7 +48,7 @@ tool = ScavioSearch()
 result = tool.invoke({"query": "best python web frameworks 2026"})
 ```
 
-## All 38 Tools
+## All 46 Tools
 
 | Tool | Description |
 |------|-------------|
@@ -78,6 +78,14 @@ result = tool.invoke({"query": "best python web frameworks 2026"})
 | `ScavioTikTokHashtagVideos` | Fetch TikTok videos for a specific hashtag |
 | `ScavioTikTokUserFollowers` | Fetch a TikTok user's followers |
 | `ScavioTikTokUserFollowings` | Fetch accounts a TikTok user is following |
+| `ScavioTikTokShopSearch` | Search TikTok Shop products by keyword (US catalog) with exact prices |
+| `ScavioTikTokShopSearchSuggestions` | Keyword autocomplete for TikTok Shop across 8 regions |
+| `ScavioTikTokShopProduct` | Full TikTok Shop product detail (no price -- upstream masks it) |
+| `ScavioTikTokShopProductReviews` | Paginated TikTok Shop reviews, up to 200 per call |
+| `ScavioTikTokShopCategories` | The global TikTok Shop category tree (240 nodes, 2 levels) |
+| `ScavioTikTokShopCategoryProducts` | Products under a TikTok Shop category, with exact prices |
+| `ScavioTikTokShopShopProducts` | A TikTok Shop seller's catalog, with exact prices |
+| `ScavioTikTokShopResolve` | Resolve a TikTok Shop URL or share link to a product_id / shop_id |
 | `ScavioInstagramProfile` | Look up an Instagram user profile by username or user_id |
 | `ScavioInstagramUserPosts` | Fetch an Instagram user's posts with statistics |
 | `ScavioInstagramUserReels` | Fetch an Instagram user's reels with statistics |
@@ -313,6 +321,83 @@ hashtag_id = result["data"]["challengeInfo"]["challenge"]["id"]
 
 hashtag_videos = ScavioTikTokHashtagVideos(max_results=5)
 result = hashtag_videos.invoke({"hashtag_id": hashtag_id})
+```
+
+### TikTok Shop
+
+Eight tools over the TikTok Shop catalog. Two things to know before you wire
+them together:
+
+1. **`ScavioTikTokShopProduct` resolves only about 44% of the product ids that
+   `ScavioTikTokShopSearch` returns.** Upstream has no detail data for the rest,
+   so a not-found result is a normal outcome rather than an error -- skip the
+   product instead of retrying. Search is a listing source, not the first leg of
+   a reliable search-then-detail pipeline.
+2. **`ScavioTikTokShopProduct` does not return a price.** Upstream masks the
+   digits on the product page, so `price.current` and `price.original` come back
+   null. Exact prices are on `ScavioTikTokShopSearch`,
+   `ScavioTikTokShopShopProducts` and `ScavioTikTokShopCategoryProducts`.
+
+```python
+from langchain_scavio import (
+    ScavioTikTokShopSearch, ScavioTikTokShopSearchSuggestions,
+    ScavioTikTokShopProduct, ScavioTikTokShopProductReviews,
+    ScavioTikTokShopCategories, ScavioTikTokShopCategoryProducts,
+    ScavioTikTokShopShopProducts, ScavioTikTokShopResolve,
+)
+
+# Search the US catalog -- this is where exact prices live
+search = ScavioTikTokShopSearch(max_results=10)
+result = search.invoke({"search": "phone case"})
+for product in result["data"]["products"]:
+    print(product["title"], product["price"]["current"], product["rating"]["score"])
+
+# Paginate with the opaque cursor; dedupe by product_id across pages
+if result["data"]["has_more"]:
+    page2 = search.invoke({
+        "search": "phone case",
+        "cursor": result["data"]["next_cursor"],
+    })
+
+# Product detail: rich, but priceless (literally) and only ~44% resolvable
+detail = ScavioTikTokShopProduct()
+result = detail.invoke({"product_id": "1732293553906094315"})
+if result.get("not_found"):
+    pass                                     # normal: skip it, do not retry
+else:
+    result["data"]["variants"]               # stock per SKU
+    result["data"]["shop"]["followers_count"]
+
+# Reviews: page with has_more, never with total_reviews (it drifts)
+reviews = ScavioTikTokShopProductReviews(max_results=20)
+result = reviews.invoke({
+    "product_id": "1732293553906094315",
+    "page_size": 100,
+    "sort": "relevant",                      # "recent" is fresher but text-sparse
+    "has_media": True,
+})
+
+# Category browse (US and GB only)
+categories = ScavioTikTokShopCategories()
+tree = categories.invoke({})
+category_id = tree["data"]["categories"][0]["category_id"]
+
+listing = ScavioTikTokShopCategoryProducts(max_results=10)
+result = listing.invoke({"category_id": category_id})
+
+# A seller's whole catalog, with exact prices
+shop = ScavioTikTokShopShopProducts(max_results=10)
+result = shop.invoke({"shop_id": "7495514739648989419"})
+
+# Turn any share link into an id
+resolve = ScavioTikTokShopResolve()
+result = resolve.invoke({"url": "https://vt.tiktok.com/ZT2AHoGsE/"})
+result["data"]["product_id"], result["data"]["type"]
+
+# Keyword expansion, the only endpoint with genuine 8-region coverage
+suggestions = ScavioTikTokShopSearchSuggestions()
+result = suggestions.invoke({"search": "wireless", "region": "GB"})
+result["data"]["suggestions"]                # plain strings, no volume or score
 ```
 
 ### Instagram

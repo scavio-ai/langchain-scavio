@@ -663,3 +663,66 @@ class ScavioInstagramUserFollowingsAPIWrapper(ScavioBaseAPIWrapper):
         return f"{base}/api/v1/instagram/user/followings"
 
 
+
+class ScavioTikTokShopSearchAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Shop Search endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok-shop/search"
+
+
+class ScavioTikTokShopSearchSuggestionsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Shop Search Suggestions endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok-shop/search/suggestions"
+
+
+class ScavioTikTokShopProductAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Shop Product Details endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok-shop/product"
+
+
+class ScavioTikTokShopProductReviewsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Shop Product Reviews endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok-shop/product/reviews"
+
+
+class ScavioTikTokShopCategoriesAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Shop Categories endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok-shop/categories"
+
+
+class ScavioTikTokShopCategoryProductsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Shop Category Products endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok-shop/category/products"
+
+
+class ScavioTikTokShopShopProductsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Shop Shop Products endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok-shop/shop/products"
+
+
+class ScavioTikTokShopResolveAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio TikTok Shop URL Resolver endpoint."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/tiktok-shop/resolve"

@@ -22,6 +22,16 @@ from langchain_scavio.scavio_tiktok import (
     ScavioTikTokVideo,
     ScavioTikTokVideoComments,
 )
+from langchain_scavio.scavio_tiktok_shop import (
+    ScavioTikTokShopCategories,
+    ScavioTikTokShopCategoryProducts,
+    ScavioTikTokShopProduct,
+    ScavioTikTokShopProductReviews,
+    ScavioTikTokShopResolve,
+    ScavioTikTokShopSearch,
+    ScavioTikTokShopSearchSuggestions,
+    ScavioTikTokShopShopProducts,
+)
 from langchain_scavio.scavio_walmart import ScavioWalmartProduct, ScavioWalmartSearch
 from langchain_scavio.scavio_youtube import (
     ScavioYouTubeChannel,
@@ -1020,3 +1030,324 @@ def tiktok_user_followings_tool() -> ScavioTikTokUserFollowings:
     return ScavioTikTokUserFollowings(scavio_api_key=MOCK_API_KEY)
 
 
+
+
+# -- TikTok Shop response builders ------------------------------------------
+#
+# Every shape below is the NORMALIZED response the backend emits, taken from
+# running backend/src/lib/tikhub/tiktok-shop-normalize.ts over the recorded
+# fixtures in backend/tests/fixtures/tiktok-shop/ -- not from the contract
+# prose. Key names here are the key names the tools must read.
+
+
+def make_tiktok_shop_envelope(data: Any, **overrides: Any) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "data": data,
+        "response_time": 1.42,
+        "credits_used": 1,
+        "credits_remaining": 999,
+    }
+    base.update(overrides)
+    return base
+
+
+def make_tiktok_shop_card(i: int = 1) -> dict[str, Any]:
+    return {
+        "product_id": f"17324831328036832{i:02d}",
+        "title": f"Pink Cherry Blossom Phone Case {i}",
+        "url": f"https://shop.tiktok.com/us/pdp/17324831328036832{i:02d}",
+        "image": "https://p19-oec-general.ttcdn-us.com/image.webp",
+        "price": {
+            "current": 4.88,
+            "original": None,
+            "currency": "USD",
+            "discount_percent": None,
+            "savings": None,
+            "min": 4.88,
+            "max": 7.88,
+        },
+        "rating": {"score": 4.7, "review_count": 15},
+        "sold_count": 103,
+        "variant_count": 25,
+        "brand": None,
+        "shop": {
+            "shop_id": "7494676034572093351",
+            "shop_name": "AmiShell",
+            "shop_logo": "https://p16-oec-general.ttcdn-us.com/logo.png",
+        },
+        "labels": ["Free shipping"],
+    }
+
+
+def make_tiktok_shop_review(i: int = 1) -> dict[str, Any]:
+    return {
+        "review_id": f"763255059759346663{i}",
+        "rating": 5,
+        "text": f"Review body {i}",
+        "created_at": "2026-04-25T04:34:57.611Z",
+        "reviewer_name": "C**",
+        "reviewer_avatar": "https://p16-common-sign.tiktokcdn-us.com/avatar.jpg",
+        "images": ["https://p16-oec-general-useast5.ttcdn-us.com/r.webp"],
+        "is_verified_purchase": True,
+        "is_incentivized": False,
+        "variant": "Default",
+        "country": "US",
+    }
+
+
+def make_tiktok_shop_search_response(
+    num_products: int = 30, **overrides: Any
+) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "query": "phone case",
+        "products": [make_tiktok_shop_card(i) for i in range(1, num_products + 1)],
+        "shops": [
+            {
+                "shop_id": "7494676034572093351",
+                "shop_name": "MAGIC JOHN",
+                "shop_logo": "https://p16-oec-general.ttcdn-us.com/logo.png",
+            }
+        ],
+        "next_cursor": "eyJrIjoic2VhcmNoIiwibyI6MzB9",
+        "has_more": True,
+        "degraded": False,
+    }
+    data.update(overrides)
+    return make_tiktok_shop_envelope(data)
+
+
+def make_tiktok_shop_suggestions_response(**overrides: Any) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "query": "wireless",
+        "region": "US",
+        "suggestions": [
+            "wireless charger",
+            "wireless apple carplay",
+            "wireless headphones",
+        ],
+    }
+    data.update(overrides)
+    return make_tiktok_shop_envelope(data)
+
+
+def make_tiktok_shop_product_response(**overrides: Any) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "product_id": "1732293553906094315",
+        "title": "[medicube] NAD+ EGF Firming Serum",
+        "description": "Plain text description.",
+        "url": "https://shop.tiktok.com/us/pdp/1732293553906094315",
+        "images": ["https://p19-oec-general.ttcdn-us.com/img.webp"],
+        # Upstream masks every price on the product page: current and original
+        # are always null here. Exact prices come from the listing endpoints.
+        "price": {
+            "currency": "USD",
+            "current": None,
+            "original": None,
+            "discount_percent": 31,
+            "savings": None,
+        },
+        "rating": {
+            "score": 4.7,
+            "review_count": 12561,
+            "distribution": {"1": 431, "2": 221, "3": 571, "4": 1175, "5": 10163},
+        },
+        "sold_count": 231615,
+        "variants": [
+            {
+                "sku_id": "1732293560756310251",
+                "name": "PMEUS43022R00",
+                "in_stock": True,
+                "available_quantity": 64657,
+                "properties": [{"name": "Specifications", "value": "Default"}],
+                "weight_kg": 0.1,
+                "dimensions_cm": {"length": 7.0, "width": 3.0, "height": 3.0},
+            }
+        ],
+        "shipping": {
+            "fee": 4.22,
+            "currency": "USD",
+            "delivery_min_days": 6,
+            "delivery_max_days": 9,
+            "delivery_min_business_days": 4,
+            "delivery_max_business_days": 7,
+            "cod_available": False,
+            "fulfillable": True,
+        },
+        "shop": {
+            "shop_id": "7495514739648989419",
+            "shop_name": "medicube US Store",
+            "shop_logo": "https://p16-oec-general.ttcdn-us.com/logo.png",
+            "shop_url": "https://shop.tiktok.com/us/store/7495514739648989419",
+            "rating": 4.6,
+            "review_count": 455798,
+            "sold_count": 7938115,
+            "followers_count": 588860,
+            "product_count": 153,
+            "video_count": 1006,
+            "region": "US",
+            "is_official": True,
+        },
+        "categories": [
+            {
+                "category_id": "601450",
+                "name": "Beauty & Personal Care",
+                "slug": "beauty-personal-care",
+            }
+        ],
+        "breadcrumbs": [
+            {"name": "Skincare", "url": "https://shop.tiktok.com/us/c/skincare/848776"}
+        ],
+        "top_reviews": [make_tiktok_shop_review(1)],
+        "seller": {
+            "business_name": "APR US INC",
+            "business_address": "41 GREENFIELD, Irvine, California, United States",
+        },
+    }
+    data.update(overrides)
+    return make_tiktok_shop_envelope(data)
+
+
+def make_tiktok_shop_reviews_response(
+    num_reviews: int = 20, **overrides: Any
+) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "product_id": "1732293553906094315",
+        "page": 1,
+        "page_size": 20,
+        "filters_applied": {
+            "sort": "relevant",
+            "rating": None,
+            "has_media": False,
+            "verified_only": False,
+        },
+        "total_reviews": 12561,
+        "rating": {
+            "score": 4.6,
+            "review_count": 12561,
+            "distribution": {"1": 431, "2": 221, "3": 571, "4": 1175, "5": 10163},
+        },
+        "reviews": [make_tiktok_shop_review(i) for i in range(1, num_reviews + 1)],
+        "has_more": True,
+    }
+    data.update(overrides)
+    return make_tiktok_shop_envelope(data)
+
+
+def make_tiktok_shop_categories_response(**overrides: Any) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "categories": [
+            {
+                "category_id": "601450",
+                "name": "Beauty & Personal Care",
+                "slug": "beauty-personal-care",
+                "level": 1,
+                "parent_id": None,
+                "image": "https://lf16-tiktok-common.tiktokcdn-us.com/beauty.png",
+                "children": [
+                    {
+                        "category_id": "849032",
+                        "name": "Hand & Foot Care",
+                        "slug": "hand-foot-care",
+                        "level": 2,
+                        "parent_id": "601450",
+                        "image": "https://lf16-tiktok-common.tiktokcdn-us.com/h.png",
+                        "children": [],
+                    }
+                ],
+            }
+        ],
+        "total_categories": 240,
+    }
+    data.update(overrides)
+    return make_tiktok_shop_envelope(data)
+
+
+def make_tiktok_shop_category_products_response(
+    num_products: int = 15, **overrides: Any
+) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "category_id": "601450",
+        "products": [make_tiktok_shop_card(i) for i in range(1, num_products + 1)],
+        "next_cursor": "eyJrIjoiY2F0ZWdvcnkiLCJvIjoyMH0",
+        "has_more": True,
+    }
+    data.update(overrides)
+    return make_tiktok_shop_envelope(data)
+
+
+def make_tiktok_shop_shop_products_response(
+    num_products: int = 30, **overrides: Any
+) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "shop_id": "7495514739648989419",
+        "shop": {
+            "shop_id": "7495514739648989419",
+            "shop_name": "medicube US Store",
+            "shop_logo": "https://p16-oec-general.ttcdn-us.com/logo.png",
+        },
+        "products": [make_tiktok_shop_card(i) for i in range(1, num_products + 1)],
+        "next_cursor": "eyJrIjoic2hvcCIsInMiOiIzMF9XemN5In0",
+        "has_more": True,
+    }
+    data.update(overrides)
+    return make_tiktok_shop_envelope(data)
+
+
+def make_tiktok_shop_resolve_response(**overrides: Any) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "type": "product",
+        "product_id": "8651224669119091502",
+        "shop_id": None,
+        "url": "https://shop.tiktok.com/us/pdp/8651224669119091502",
+        "resolved_by": "share_link",
+    }
+    data.update(overrides)
+    return make_tiktok_shop_envelope(data)
+
+
+def make_tiktok_shop_not_found_response(error: str) -> dict[str, Any]:
+    """The billed 404 body: an error plus the credit fields, no data key."""
+    return {"error": error, "credits_used": 1, "credits_remaining": 999}
+
+
+# -- TikTok Shop fixtures ---------------------------------------------------
+
+
+@pytest.fixture()
+def tiktok_shop_search_tool() -> ScavioTikTokShopSearch:
+    return ScavioTikTokShopSearch(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def tiktok_shop_suggestions_tool() -> ScavioTikTokShopSearchSuggestions:
+    return ScavioTikTokShopSearchSuggestions(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def tiktok_shop_product_tool() -> ScavioTikTokShopProduct:
+    return ScavioTikTokShopProduct(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def tiktok_shop_reviews_tool() -> ScavioTikTokShopProductReviews:
+    return ScavioTikTokShopProductReviews(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def tiktok_shop_categories_tool() -> ScavioTikTokShopCategories:
+    return ScavioTikTokShopCategories(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def tiktok_shop_category_products_tool() -> ScavioTikTokShopCategoryProducts:
+    return ScavioTikTokShopCategoryProducts(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def tiktok_shop_shop_products_tool() -> ScavioTikTokShopShopProducts:
+    return ScavioTikTokShopShopProducts(scavio_api_key=MOCK_API_KEY)
+
+
+@pytest.fixture()
+def tiktok_shop_resolve_tool() -> ScavioTikTokShopResolve:
+    return ScavioTikTokShopResolve(scavio_api_key=MOCK_API_KEY)
