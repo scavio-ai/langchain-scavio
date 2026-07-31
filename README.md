@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-integration-blueviolet)](https://python.langchain.com/)
 
-**46 LangChain tools for real-time search across Google, Amazon, Walmart, YouTube, Reddit, TikTok, TikTok Shop, and Instagram** -- structured data with knowledge graphs, all through a single package.
+**47 LangChain tools for real-time search across Google, Amazon, Walmart, YouTube, Reddit, TikTok, TikTok Shop, and Instagram** -- structured data with knowledge graphs, all through a single package.
 
 ```bash
 pip install langchain-scavio
@@ -25,12 +25,12 @@ Scavio is a full [Tavily alternative](https://scavio.dev/alternatives/tavily) bu
 | **Knowledge graphs** | Yes | No | Partial |
 | **Product data** (price, rating, reviews) | Yes | No | No |
 | **Pricing** | $0.005/credit | $0.01/search | $0.05/search |
-| **Amazon marketplace coverage** | 23 countries | -- | -- |
+| **Amazon marketplace coverage** | 22 countries | -- | -- |
 | **LangChain async** | Yes | Yes | Yes |
 
 ## What Can You Build?
 
-- **Shopping agents** -- search Amazon and Walmart, compare prices, find deals across 23 marketplaces
+- **Shopping agents** -- search Amazon and Walmart, compare prices, find deals across 22 marketplaces
 - **Product research agents** -- Google reviews + Amazon listings + YouTube reviews + Reddit opinions in one query
 - **Content research agents** -- YouTube trends + Reddit sentiment + Google news in a single workflow
 - **Brand monitoring** -- track what Reddit and Google say about any topic in real time
@@ -48,13 +48,14 @@ tool = ScavioSearch()
 result = tool.invoke({"query": "best python web frameworks 2026"})
 ```
 
-## All 46 Tools
+## All 47 Tools
 
 | Tool | Description |
 |------|-------------|
 | `ScavioSearch` | Google web search with knowledge graphs, PAA questions, news |
-| `ScavioAmazonSearch` | Search Amazon product listings across 23 marketplaces |
+| `ScavioAmazonSearch` | Search Amazon product listings across 22 marketplaces |
 | `ScavioAmazonProduct` | Fetch full details for an Amazon product by ASIN |
+| `ScavioAmazonOffers` | Every seller offer for an ASIN: price, seller, condition, buy box |
 | `ScavioWalmartSearch` | Search Walmart product listings with price/fulfillment filters |
 | `ScavioWalmartProduct` | Fetch full details for a Walmart product by ID |
 | `ScavioYouTubeSearch` | Search YouTube videos with duration/date/type/feature filters |
@@ -169,19 +170,21 @@ tool = ScavioSearch(
 ### Amazon
 
 ```python
-from langchain_scavio import ScavioAmazonSearch, ScavioAmazonProduct
+from langchain_scavio import ScavioAmazonSearch, ScavioAmazonProduct, ScavioAmazonOffers
 
-search = ScavioAmazonSearch(
-    max_results=5,
-    pages=1,                             # number of result pages to fetch
-    domain="com",                        # see supported marketplaces below
-)
+search = ScavioAmazonSearch(max_results=5)
+search.invoke({"query": "wireless headphones", "country": "us", "page": 1})
 
 product = ScavioAmazonProduct()
-result = product.invoke({"query": "B08N5WRWNW"})  # query = ASIN
+product.invoke({"query": "B08N5WRWNW"})           # query = ASIN
+
+offers = ScavioAmazonOffers()
+offers.invoke({"query": "B08N5WRWNW"})            # every seller for that ASIN
 ```
 
-> **Targeting a marketplace:** use `domain` to pick which Amazon store to search -- **do not** use a country code. Supported domains: `com` (US), `co.uk` (UK), `ca`, `de`, `fr`, `es`, `it`, `co.jp`, `in`, `com.au`, `com.br`, `com.mx`, `nl`, `pl`, `se`, `sg`, `ae`, `sa`, `eg`, `cn`, `com.be`, `com.tr`.
+> **Targeting a marketplace:** `country` takes a two-letter code, not a domain. Supported: `us` (default), `gb` (the UK is `gb`, not `uk`), `ca`, `de`, `fr`, `es`, `it`, `jp`, `in`, `au`, `br`, `mx`, `nl`, `pl`, `se`, `sg`, `ae`, `sa`, `eg`, `cn`, `be`, `tr`. An unrecognised code falls back to `us`.
+
+> **Amazon changed in 3.0 (breaking).** The upstream provider moved and the request surface shrank. `sort_by`, `pages`, `category_id`, `merchant_id`, `language`, `currency`, `device`, `zip_code` and `autoselect_variant` are gone from all Amazon tools -- the marketplace ignores every one of them, so they are removed rather than kept as silent no-ops (`sort_by` was verified: all six sort values return the identical unordered set). `domain` and `start_page` still work on the wire and are still forwarded, but they are no longer in the tool schemas: use `country` and `page`. Response fields were renamed too -- `url_image` is now `image`, `best_seller`/`is_amazons_choice` collapsed into `badge`, and `buybox` is gone (use `ScavioAmazonOffers`).
 
 ### Walmart
 
@@ -460,13 +463,18 @@ result = search_hashtags.invoke({"keyword": "travel"})
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `query` | `str` | Product search query |
-| `domain` | `str` | Amazon marketplace -- the only way to select a store (com, co.uk, de, co.jp, ...) |
-| `sort_by` | `str` | featured\|most_recent\|price_low_to_high\|price_high_to_low\|average_review\|bestsellers |
-| `start_page` | `int` | Page number |
-| `category_id` | `str` | Category filter |
-| `merchant_id` | `str` | Seller filter |
-| `language` / `currency` | `str` | Localization |
-| `zip_code` | `str` | Local pricing |
+| `country` | `str` | Two-letter marketplace code (us, gb, de, jp, ...). Defaults to us |
+| `page` | `int` | Result page, 1-based. One page per call, 1 credit each |
+
+There is no sort, category, merchant or price filter: the marketplace ignores
+them. Rank results yourself.
+
+### ScavioAmazonProduct / ScavioAmazonOffers
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | `str` | The ASIN |
+| `country` | `str` | Two-letter marketplace code. Defaults to us |
 
 ### ScavioWalmartSearch
 
@@ -688,6 +696,7 @@ ScavioBaseAPIWrapper                      # Auth, headers, sync/async HTTP POST
   +-- ScavioSearchAPIWrapper              # -> /api/v2/google (+ news, maps)
   +-- ScavioAmazonSearchAPIWrapper        # -> /api/v1/amazon/search
   +-- ScavioAmazonProductAPIWrapper       # -> /api/v1/amazon/product
+  +-- ScavioAmazonOffersAPIWrapper        # -> /api/v1/amazon/offers
   +-- ScavioWalmartSearchAPIWrapper       # -> /api/v1/walmart/search
   +-- ScavioWalmartProductAPIWrapper      # -> /api/v1/walmart/product
   +-- ScavioYouTubeSearchAPIWrapper       # -> /api/v1/youtube/search

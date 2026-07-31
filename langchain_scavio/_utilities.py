@@ -379,6 +379,14 @@ class ScavioAmazonProductAPIWrapper(ScavioBaseAPIWrapper):
         return f"{base}/api/v1/amazon/product"
 
 
+class ScavioAmazonOffersAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio Amazon Offers endpoint (POST /api/v1/amazon/offers)."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/amazon/offers"
+
+
 class ScavioWalmartSearchAPIWrapper(ScavioBaseAPIWrapper):
     """Wrapper for the Scavio Walmart Search endpoint (POST /api/v1/walmart/search)."""
 

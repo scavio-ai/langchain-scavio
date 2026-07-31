@@ -2,7 +2,11 @@
 
 from importlib import metadata
 
-from langchain_scavio.scavio_amazon import ScavioAmazonProduct, ScavioAmazonSearch
+from langchain_scavio.scavio_amazon import (
+    ScavioAmazonOffers,
+    ScavioAmazonProduct,
+    ScavioAmazonSearch,
+)
 from langchain_scavio.scavio_instagram import (
     ScavioInstagramCommentReplies,
     ScavioInstagramPost,
@@ -64,6 +68,7 @@ __all__ = [
     "ScavioSearch",
     "ScavioAmazonSearch",
     "ScavioAmazonProduct",
+    "ScavioAmazonOffers",
     "ScavioWalmartSearch",
     "ScavioWalmartProduct",
     "ScavioYouTubeSearch",

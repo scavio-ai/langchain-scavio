@@ -1,4 +1,4 @@
-"""Tests for ScavioAmazonSearch and ScavioAmazonProduct tools."""
+"""Tests for the ScavioAmazonSearch, ScavioAmazonProduct and ScavioAmazonOffers tools."""
 
 from __future__ import annotations
 
@@ -8,7 +8,11 @@ import pytest
 import responses
 
 from langchain_scavio._utilities import SCAVIO_API_URL
-from langchain_scavio.scavio_amazon import ScavioAmazonProduct, ScavioAmazonSearch
+from langchain_scavio.scavio_amazon import (
+    ScavioAmazonOffers,
+    ScavioAmazonProduct,
+    ScavioAmazonSearch,
+)
 
 from .conftest import (
     MOCK_API_KEY,
@@ -19,26 +23,33 @@ from .conftest import (
 
 SEARCH_ENDPOINT = f"{SCAVIO_API_URL}/api/v1/amazon/search"
 PRODUCT_ENDPOINT = f"{SCAVIO_API_URL}/api/v1/amazon/product"
+OFFERS_ENDPOINT = f"{SCAVIO_API_URL}/api/v1/amazon/offers"
+
+# Params the old provider accepted and the current one has no equivalent for.
+# They must not reappear as typed fields: a tool schema advertising a filter the
+# API silently drops is worse than no filter at all.
+RETIRED_PARAMS = (
+    "sort_by",
+    "pages",
+    "category_id",
+    "merchant_id",
+    "language",
+    "currency",
+    "device",
+    "zip_code",
+    "autoselect_variant",
+)
 
 
 class TestAmazonSearchInstantiation:
     def test_default_params(self, amazon_search_tool: ScavioAmazonSearch) -> None:
         assert amazon_search_tool.name == "scavio_amazon_search"
         assert amazon_search_tool.max_results == 5
-        assert amazon_search_tool.pages is None
-        assert amazon_search_tool.autoselect_variant is None
         assert amazon_search_tool.handle_tool_error is True
 
     def test_custom_params(self) -> None:
-        tool = ScavioAmazonSearch(
-            scavio_api_key=MOCK_API_KEY,
-            max_results=10,
-            pages=2,
-            autoselect_variant=True,
-        )
+        tool = ScavioAmazonSearch(scavio_api_key=MOCK_API_KEY, max_results=10)
         assert tool.max_results == 10
-        assert tool.pages == 2
-        assert tool.autoselect_variant is True
 
     def test_api_key_forwarded_to_wrapper(self) -> None:
         tool = ScavioAmazonSearch(scavio_api_key=MOCK_API_KEY)
@@ -105,7 +116,27 @@ class TestAmazonSearchRun:
         assert "error" in str(result).lower()
 
     @responses.activate
-    def test_sort_by_forwarded(self, amazon_search_tool: ScavioAmazonSearch) -> None:
+    def test_country_and_page_forwarded(
+        self, amazon_search_tool: ScavioAmazonSearch
+    ) -> None:
+        import json as json_mod
+
+        responses.add(
+            responses.POST,
+            SEARCH_ENDPOINT,
+            json=make_amazon_search_response(),
+            status=200,
+        )
+        amazon_search_tool.invoke({"query": "laptop", "country": "gb", "page": 2})
+        body = json_mod.loads(responses.calls[0].request.body)
+        assert body["country"] == "gb"
+        assert body["page"] == 2
+
+    @responses.activate
+    def test_deprecated_aliases_still_forwarded(
+        self, amazon_search_tool: ScavioAmazonSearch
+    ) -> None:
+        """domain/start_page are off the schema but must not be dropped."""
         import json as json_mod
 
         responses.add(
@@ -115,13 +146,16 @@ class TestAmazonSearchRun:
             status=200,
         )
         amazon_search_tool.invoke(
-            {"query": "laptop", "sort_by": "price_low_to_high"}
+            {"query": "book", "domain": "co.uk", "start_page": 3}
         )
         body = json_mod.loads(responses.calls[0].request.body)
-        assert body["sort_by"] == "price_low_to_high"
+        assert body["domain"] == "co.uk"
+        assert body["start_page"] == 3
 
     @responses.activate
-    def test_domain_forwarded(self, amazon_search_tool: ScavioAmazonSearch) -> None:
+    def test_retired_params_never_reach_the_wire(
+        self, amazon_search_tool: ScavioAmazonSearch
+    ) -> None:
         import json as json_mod
 
         responses.add(
@@ -130,17 +164,11 @@ class TestAmazonSearchRun:
             json=make_amazon_search_response(),
             status=200,
         )
-        amazon_search_tool.invoke({"query": "book", "domain": "co.uk"})
+        amazon_search_tool.invoke(
+            {"query": "laptop", **{p: "x" for p in RETIRED_PARAMS}}
+        )
         body = json_mod.loads(responses.calls[0].request.body)
-        assert body["domain"] == "co.uk"
-
-
-class TestAmazonSearchForbiddenParams:
-    def test_init_only_params_rejected_at_invocation(
-        self, amazon_search_tool: ScavioAmazonSearch
-    ) -> None:
-        with pytest.raises(ValueError, match="instantiation"):
-            amazon_search_tool._run(query="test", max_results=10)
+        assert not set(body) & set(RETIRED_PARAMS)
 
 
 class TestAmazonSearchAsync:
@@ -178,9 +206,9 @@ class TestAmazonSearchInputSchema:
         input_schema = tool.get_input_schema().model_json_schema()
         props = input_schema["properties"]
         assert "query" in props
-        assert "domain" in props
-        assert "sort_by" in props
-        assert "start_page" in props
+        assert "country" in props
+        assert "page" in props
+        assert not set(props) & set(RETIRED_PARAMS)
 
     def test_query_is_required(self) -> None:
         tool = ScavioAmazonSearch(scavio_api_key=MOCK_API_KEY)
@@ -298,10 +326,78 @@ class TestAmazonProductInputSchema:
         input_schema = tool.get_input_schema().model_json_schema()
         props = input_schema["properties"]
         assert "query" in props
-        assert "domain" in props
-        assert "autoselect_variant" in props
+        assert "country" in props
+        assert not set(props) & set(RETIRED_PARAMS)
 
     def test_query_is_required(self) -> None:
         tool = ScavioAmazonProduct(scavio_api_key=MOCK_API_KEY)
         input_schema = tool.get_input_schema().model_json_schema()
         assert "query" in input_schema.get("required", [])
+
+
+class TestAmazonOffers:
+    def test_instantiation(self) -> None:
+        tool = ScavioAmazonOffers(scavio_api_key=MOCK_API_KEY)
+        assert tool.name == "scavio_amazon_offers"
+        assert tool.api_wrapper.scavio_api_key.get_secret_value() == MOCK_API_KEY
+
+    def test_schema_has_expected_fields(self) -> None:
+        tool = ScavioAmazonOffers(scavio_api_key=MOCK_API_KEY)
+        props = tool.get_input_schema().model_json_schema()["properties"]
+        assert "query" in props
+        assert "country" in props
+        assert not set(props) & set(RETIRED_PARAMS)
+
+    @responses.activate
+    def test_asin_forwarded_as_query(self) -> None:
+        import json as json_mod
+
+        tool = ScavioAmazonOffers(scavio_api_key=MOCK_API_KEY)
+        responses.add(
+            responses.POST,
+            OFFERS_ENDPOINT,
+            json={"data": {"asin": "B001234567", "offers": [], "count": 0}},
+            status=200,
+        )
+        tool.invoke({"query": "B001234567", "country": "de"})
+        body = json_mod.loads(responses.calls[0].request.body)
+        assert body["query"] == "B001234567"
+        assert body["country"] == "de"
+
+    @responses.activate
+    def test_empty_offers_list_is_not_an_error(self) -> None:
+        """Amazon-only ASINs legitimately have zero third-party offers."""
+        tool = ScavioAmazonOffers(scavio_api_key=MOCK_API_KEY)
+        responses.add(
+            responses.POST,
+            OFFERS_ENDPOINT,
+            json={
+                "data": {
+                    "asin": "B001234567",
+                    "offers": [],
+                    "count": 0,
+                    "note": "Ships from and sold by Amazon.com",
+                }
+            },
+            status=200,
+        )
+        result = tool.invoke({"query": "B001234567"})
+        assert result["data"]["count"] == 0
+
+    @responses.activate
+    def test_missing_data_raises_tool_exception(self) -> None:
+        tool = ScavioAmazonOffers(scavio_api_key=MOCK_API_KEY)
+        responses.add(responses.POST, OFFERS_ENDPOINT, json={"data": None}, status=200)
+        result = tool.invoke({"query": "BADINVALID"})
+        assert "No Amazon offer listing found" in result
+
+    @pytest.mark.asyncio
+    async def test_async_offers(self) -> None:
+        tool = ScavioAmazonOffers(scavio_api_key=MOCK_API_KEY)
+        with patch(
+            "langchain_scavio._utilities.ScavioAmazonOffersAPIWrapper.raw_results_async",
+            new_callable=AsyncMock,
+            return_value={"data": {"asin": "B001234567", "offers": [], "count": 0}},
+        ):
+            result = await tool.ainvoke({"query": "B001234567"})
+            assert "data" in result
