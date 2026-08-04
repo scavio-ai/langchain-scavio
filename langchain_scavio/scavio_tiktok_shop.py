@@ -149,7 +149,8 @@ class ScavioTikTokShopSearch(BaseTool):  # type: ignore[override]
         "Product ids returned here are not guaranteed to resolve on "
         "scavio_tiktok_shop_product: only about 44% do, so treat this as a "
         "listing source, not the first leg of a search-then-detail pipeline. "
-        "This endpoint returns exact prices; the product endpoint does not."
+        "This endpoint returns exact prices; the product endpoint does not. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokShopSearchInput
     handle_tool_error: bool = True
@@ -280,7 +281,8 @@ class ScavioTikTokShopSearchSuggestions(BaseTool):  # type: ignore[override]
         "across 8 marketplace regions. Returns a plain list of suggestion "
         "strings with no search volume or score. Suggestions are not "
         "guaranteed prefix matches: a misspelling returns typo corrections, "
-        "and results can include brand and shop names."
+        "and results can include brand and shop names. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokShopSearchSuggestionsInput
     handle_tool_error: bool = True
@@ -409,7 +411,8 @@ class ScavioTikTokShopProduct(BaseTool):  # type: ignore[override]
         + " "
         + PRODUCT_COVERAGE_NOTE
         + " A not_found result is returned as data null with not_found true; "
-        "treat it as a normal answer and move on."
+        "treat it as a normal answer and move on. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokShopProductInput
     handle_tool_error: bool = True
@@ -575,7 +578,8 @@ class ScavioTikTokShopProductReviews(BaseTool):  # type: ignore[override]
         "compute a page count; page with data.has_more instead. "
         'sort="recent" is fresher but far more text-sparse than the default '
         '"relevant". Reviewer names are pre-masked by the platform and image '
-        "URLs are signed and expire."
+        "URLs are signed and expire. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokShopProductReviewsInput
     handle_tool_error: bool = True
@@ -730,7 +734,8 @@ class ScavioTikTokShopCategories(BaseTool):  # type: ignore[override]
         "240 nodes, two levels deep. Category ids are identical in every "
         "region and names are always English, so this tool takes no "
         "parameters. Use a category_id from here with "
-        "scavio_tiktok_shop_category_products. The tree is stable; cache it."
+        "scavio_tiktok_shop_category_products. The tree is stable; cache it. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokShopCategoriesInput
     handle_tool_error: bool = True
@@ -854,7 +859,8 @@ class ScavioTikTokShopCategoryProducts(BaseTool):  # type: ignore[override]
         "with data.next_cursor and never assume a fixed size. Listings are "
         "shallow: has_more turning false after a few pages is the end of the "
         "listing, not an error. This endpoint returns exact prices; the "
-        "product endpoint does not."
+        "product endpoint does not. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokShopCategoryProductsInput
     handle_tool_error: bool = True
@@ -1012,7 +1018,8 @@ class ScavioTikTokShopShopProducts(BaseTool):  # type: ignore[override]
         "exact prices. Paginate with data.next_cursor. Shop follower count, "
         "location and shop-level rating are not available here -- call "
         "scavio_tiktok_shop_product for the full shop profile. This endpoint "
-        "returns exact prices; the product endpoint does not."
+        "returns exact prices; the product endpoint does not. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokShopShopProductsInput
     handle_tool_error: bool = True
@@ -1164,7 +1171,8 @@ class ScavioTikTokShopResolve(BaseTool):  # type: ignore[override]
         "shop.tiktok.com product and store pages, tiktok.com/view links, "
         "affiliate share links and vt.tiktok.com short links. Returns the id, "
         "a canonical https URL and whether it was read from the URL pattern "
-        "or by following the share link. A dead link returns not_found."
+        "or by following the share link. A dead link returns not_found. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokShopResolveInput
     handle_tool_error: bool = True

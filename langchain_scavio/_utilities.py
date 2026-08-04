@@ -227,9 +227,11 @@ def _translate_google_params(
 ) -> tuple[str, dict[str, Any], int]:
     """Translate v1-style Google params to a v2 search_type + request body.
 
-    v1 -> v2 mapping: country_code -> gl, language -> hl,
-    page (1-indexed) -> start (offset), light_request -> dropped
-    (v2 always returns full results for 1 credit).
+    Native v2 params (gl, hl, start, google_domain, ...) are passed straight
+    through. The pre-3.2 aliases are mapped first and then overwritten by any
+    native value: country_code -> gl, language -> hl, page (1-indexed) -> start
+    (a 0-based offset), light_request -> dropped (v2 always returns full
+    results for 1 credit).
 
     Returns:
         Tuple of (search_type, v2 request body, requested page).
@@ -257,9 +259,12 @@ def _translate_google_params(
             if key in p:
                 body[key] = p.pop(key)
     else:
-        # News and Maps endpoints do not take device/nfpr/start.
+        # News and Maps endpoints take neither device nor nfpr, and news has
+        # no result offset at all (maps does, in multiples of 20).
         p.pop("device", None)
         p.pop("nfpr", None)
+        if search_type == "news":
+            p.pop("start", None)
     body.update(p)
     return search_type, body, page
 
@@ -485,6 +490,89 @@ class ScavioRedditPostAPIWrapper(ScavioBaseAPIWrapper):
     def _build_url(self) -> str:
         base = self.api_base_url or SCAVIO_API_URL
         return f"{base}/api/v1/reddit/post"
+
+
+# The remaining 10 Reddit endpoints, added in 3.3. All 12 cost 1 credit.
+
+
+class ScavioRedditSearchSuggestionsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/reddit/search/suggestions."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/reddit/search/suggestions"
+
+
+class ScavioRedditPostCommentsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/reddit/post/comments."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/reddit/post/comments"
+
+
+class ScavioRedditCommentRepliesAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/reddit/post/comments/replies."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/reddit/post/comments/replies"
+
+
+class ScavioRedditSubredditAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/reddit/subreddit."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/reddit/subreddit"
+
+
+class ScavioRedditSubredditPostsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/reddit/subreddit/posts."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/reddit/subreddit/posts"
+
+
+class ScavioRedditUserAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/reddit/user."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/reddit/user"
+
+
+class ScavioRedditUserPostsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/reddit/user/posts."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/reddit/user/posts"
+
+
+class ScavioRedditUserCommentsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/reddit/user/comments."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/reddit/user/comments"
+
+
+class ScavioRedditPopularAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/reddit/popular."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/reddit/popular"
+
+
+class ScavioRedditTrendingAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/reddit/trending."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/reddit/trending"
 
 
 class ScavioTikTokProfileAPIWrapper(ScavioBaseAPIWrapper):
@@ -734,3 +822,323 @@ class ScavioTikTokShopResolveAPIWrapper(ScavioBaseAPIWrapper):
     def _build_url(self) -> str:
         base = self.api_base_url or SCAVIO_API_URL
         return f"{base}/api/v1/tiktok-shop/resolve"
+
+# YouTube endpoints added in 3.2.
+
+
+class ScavioYouTubeShortsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/youtube/shorts."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/shorts"
+
+
+class ScavioYouTubeSuggestionsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/youtube/suggestions."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/suggestions"
+
+
+class ScavioYouTubeCommentRepliesAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/youtube/comments/replies."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/comments/replies"
+
+
+class ScavioYouTubeRelatedAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/youtube/related."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/related"
+
+
+class ScavioYouTubeChannelSearchAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/youtube/channel/search."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/channel/search"
+
+
+class ScavioYouTubeChannelShortsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/youtube/channel/shorts."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/channel/shorts"
+
+
+class ScavioYouTubeChannelCommunityAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/youtube/channel/community."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/channel/community"
+
+
+class ScavioYouTubeChannelResolveAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/youtube/channel/resolve."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/youtube/channel/resolve"
+
+# Google v2 verticals added in 3.2 (native v2 params, flat responses).
+
+
+class ScavioGoogleAIModeAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v2/google/ai-mode."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v2/google/ai-mode"
+
+
+class ScavioGoogleMapsPlaceAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v2/google/maps/place."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v2/google/maps/place"
+
+
+class ScavioGoogleMapsReviewsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v2/google/maps/reviews."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v2/google/maps/reviews"
+
+
+class ScavioGoogleShoppingAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v2/google/shopping."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v2/google/shopping"
+
+
+class ScavioGoogleShoppingProductAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v2/google/shopping/product."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v2/google/shopping/product"
+
+
+class ScavioGoogleShoppingStoresAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v2/google/shopping/product/stores."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v2/google/shopping/product/stores"
+
+
+class ScavioGoogleFlightsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v2/google/flights."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v2/google/flights"
+
+
+class ScavioGoogleHotelsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v2/google/hotels."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v2/google/hotels"
+
+
+class ScavioGoogleHotelsDetailAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v2/google/hotels/detail."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v2/google/hotels/detail"
+
+
+class ScavioGoogleTrendsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v2/google/trends."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v2/google/trends"
+
+
+class ScavioGoogleTrendingAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v2/google/trending."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v2/google/trending"
+
+# X (Twitter) endpoints, 1 credit each.
+
+
+class ScavioXSearchAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/x/search."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/x/search"
+
+
+class ScavioXTweetAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/x/tweet."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/x/tweet"
+
+
+class ScavioXTweetCommentsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/x/tweet/comments."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/x/tweet/comments"
+
+
+class ScavioXTweetRetweetersAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/x/tweet/retweeters."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/x/tweet/retweeters"
+
+
+class ScavioXUserAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/x/user."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/x/user"
+
+
+class ScavioXUserTweetsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/x/user/tweets."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/x/user/tweets"
+
+
+class ScavioXUserRepliesAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/x/user/replies."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/x/user/replies"
+
+
+class ScavioXUserMediaAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/x/user/media."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/x/user/media"
+
+
+class ScavioXUserFollowersAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/x/user/followers."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/x/user/followers"
+
+
+class ScavioXUserFollowingsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/x/user/followings."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/x/user/followings"
+
+
+class ScavioXTrendingAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/x/trending."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/x/trending"
+
+# LinkedIn endpoints (the 5 retired 410 routes are not wrapped).
+
+
+class ScavioLinkedInPersonAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/linkedin/person."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/linkedin/person"
+
+
+class ScavioLinkedInPersonAboutAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/linkedin/person/about."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/linkedin/person/about"
+
+
+class ScavioLinkedInPersonPostsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/linkedin/person/posts."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/linkedin/person/posts"
+
+
+class ScavioLinkedInCompanyAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/linkedin/company."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/linkedin/company"
+
+
+class ScavioLinkedInCompanyPostsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/linkedin/company/posts."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/linkedin/company/posts"
+
+
+class ScavioLinkedInSearchJobsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/linkedin/search/jobs."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/linkedin/search/jobs"
+
+
+class ScavioLinkedInJobAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/linkedin/job."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/linkedin/job"
+
+
+class ScavioLinkedInPostAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/linkedin/post."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/linkedin/post"
+
+
+class ScavioLinkedInPostCommentsAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/linkedin/post/comments."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/linkedin/post/comments"

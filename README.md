@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-integration-blueviolet)](https://python.langchain.com/)
 
-**47 LangChain tools for real-time search across Google, Amazon, Walmart, YouTube, Reddit, TikTok, TikTok Shop, and Instagram** -- structured data with knowledge graphs, all through a single package.
+**96 LangChain tools for real-time search across Google, YouTube, Amazon, Walmart, Reddit, TikTok, TikTok Shop, Instagram, X (Twitter), and LinkedIn** -- structured data with knowledge graphs, all through a single package.
 
 ```bash
 pip install langchain-scavio
@@ -21,7 +21,7 @@ Scavio is a full [Tavily alternative](https://scavio.dev/alternatives/tavily) bu
 | | Scavio | Tavily | SerpAPI |
 |---|---|---|---|
 | **Platforms** | Google, YouTube, Amazon, Walmart, Reddit, TikTok, TikTok Shop, Instagram, X, LinkedIn | Google only | Google + others |
-| **Tools** | 47 | 1 | 1 per wrapper |
+| **Tools** | 96 | 1 | 1 per wrapper |
 | **Knowledge graphs** | Yes | No | Partial |
 | **Product data** (price, rating, reviews) | Yes | No | No |
 | **Pricing** | $0.005/credit | $0.01/search | $0.05/search |
@@ -34,7 +34,9 @@ Scavio is a full [Tavily alternative](https://scavio.dev/alternatives/tavily) bu
 - **Product research agents** -- Google reviews + Amazon listings + YouTube reviews + Reddit opinions in one query
 - **Content research agents** -- YouTube trends + Reddit sentiment + Google news in a single workflow
 - **Brand monitoring** -- track what Reddit and Google say about any topic in real time
-- **Social media agents** -- TikTok and Instagram profile analytics, hashtag tracking, post/video comments, and trend discovery
+- **Social media agents** -- TikTok, Instagram and X profile analytics, hashtag tracking, post/video comments, and trend discovery
+- **B2B prospecting agents** -- LinkedIn people, companies, posts and job listings for lead research and hiring signals
+- **Travel and local agents** -- Google Flights, Hotels, Maps places and reviews behind one API key
 
 ## Quick Start
 
@@ -48,26 +50,73 @@ tool = ScavioSearch()
 result = tool.invoke({"query": "best python web frameworks 2026"})
 ```
 
-## All 47 Tools
+## All 96 Tools
+
+Per platform: Google 12, YouTube 16, Instagram 12, Reddit 12, TikTok 11, X 11,
+LinkedIn 9, TikTok Shop 8, Amazon 3, Walmart 2.
+
+> **New in 3.3.** Reddit goes from 2 tools to all 12 endpoints: search
+> suggestions, post comments, comment replies, subreddit metadata and feed,
+> user profile/posts/comments, the popular feed and trending queries. Every
+> Reddit endpoint costs 1 credit. `ScavioRedditSearch` and `ScavioRedditPost`
+> are unchanged apart from their descriptions, which now state the cost -- so
+> every tool in the package states its cost.
+
+> **New in 3.2.** X (11 tools) and LinkedIn (9) are new platforms; Google gained
+> its 11 remaining v2 verticals (AI Mode, Maps place/reviews, Shopping, Flights,
+> Hotels, Trends, Trending) and YouTube its 8 remaining endpoints (Shorts,
+> suggestions, comment replies, related, channel search/shorts/community/resolve).
+> Google tools now take the v2 parameters natively -- `gl`, `hl`, `start`,
+> `google_domain` -- with `country_code`, `language` and `page` kept as aliases.
+> Every tool description now states its credit cost.
 
 | Tool | Description |
 |------|-------------|
 | `ScavioSearch` | Google web search with knowledge graphs, PAA questions, news |
+| `ScavioGoogleAIMode` | Google AI Mode answer with cited references |
+| `ScavioGoogleMapsPlace` | Google Maps place details by place_id or data_cid |
+| `ScavioGoogleMapsReviews` | Google Maps reviews for a place, with sorting |
+| `ScavioGoogleShopping` | Google Shopping listings with price and shipping filters |
+| `ScavioGoogleShoppingProduct` | Google Shopping product detail and its sellers |
+| `ScavioGoogleShoppingStores` | More sellers for a Google Shopping product |
+| `ScavioGoogleFlights` | Google Flights search between two airports |
+| `ScavioGoogleHotels` | Google Hotels search for a destination and date range |
+| `ScavioGoogleHotelsDetail` | Google Hotels property detail with booking sources |
+| `ScavioGoogleTrends` | Google Trends interest over time and by region |
+| `ScavioGoogleTrending` | Google Trending Now for a country |
 | `ScavioAmazonSearch` | Search Amazon product listings across 22 marketplaces |
 | `ScavioAmazonProduct` | Fetch full details for an Amazon product by ASIN |
 | `ScavioAmazonOffers` | Every seller offer for an ASIN: price, seller, condition, buy box |
 | `ScavioWalmartSearch` | Search Walmart product listings with price/fulfillment filters |
 | `ScavioWalmartProduct` | Fetch full details for a Walmart product by ID |
 | `ScavioYouTubeSearch` | Search YouTube videos with duration/date/type/feature filters |
+| `ScavioYouTubeShorts` | Search YouTube Shorts with sorting and pagination |
+| `ScavioYouTubeSuggestions` | YouTube search autocomplete for keyword expansion |
 | `ScavioYouTubeVideo` | Fetch full details for a YouTube video (chapters, captions) |
 | `ScavioYouTubeMetadata` | Deprecated alias of `ScavioYouTubeVideo` |
 | `ScavioYouTubeComments` | Fetch comments on a YouTube video with pagination |
+| `ScavioYouTubeCommentReplies` | Fetch replies to a specific YouTube comment |
 | `ScavioYouTubeTranscript` | Fetch a YouTube video transcript as text or SRT |
+| `ScavioYouTubeRelated` | Fetch videos related to a YouTube video |
+| `ScavioYouTubeChannelSearch` | Search YouTube channels by name |
 | `ScavioYouTubeChannel` | Fetch channel details by ID, @handle, or URL |
 | `ScavioYouTubeChannelVideos` | Fetch a YouTube channel's uploaded videos |
+| `ScavioYouTubeChannelShorts` | Fetch a YouTube channel's Shorts |
+| `ScavioYouTubeChannelCommunity` | Fetch a YouTube channel's community posts |
+| `ScavioYouTubeChannelResolve` | Resolve an @handle or URL to a channel ID |
 | `ScavioYouTubeStreams` | Fetch playable/downloadable stream URLs for a video |
 | `ScavioRedditSearch` | Search Reddit posts with cursor pagination |
+| `ScavioRedditSearchSuggestions` | Reddit search autocomplete for query expansion |
 | `ScavioRedditPost` | Fetch a Reddit post's metadata by URL (no comments) |
+| `ScavioRedditPostComments` | Top-level comments on a Reddit post, with sorting |
+| `ScavioRedditCommentReplies` | Replies to one comment (needs its `reply_cursor`) |
+| `ScavioRedditSubreddit` | Subreddit metadata: subscribers, description, icon |
+| `ScavioRedditSubredditPosts` | A subreddit's post feed (the only `RISING` sort) |
+| `ScavioRedditUser` | A redditor's profile: karma breakdown, avatar, bio |
+| `ScavioRedditUserPosts` | A redditor's submitted posts with sorting |
+| `ScavioRedditUserComments` | A redditor's comments, each with its parent post |
+| `ScavioRedditPopular` | The site-wide r/popular feed (cursor only) |
+| `ScavioRedditTrending` | Reddit search queries trending right now |
 | `ScavioTikTokProfile` | Look up a TikTok user profile by username or sec_user_id |
 | `ScavioTikTokUserPosts` | Fetch a TikTok user's posted videos with statistics |
 | `ScavioTikTokVideo` | Fetch details for a single TikTok video |
@@ -99,6 +148,26 @@ result = tool.invoke({"query": "best python web frameworks 2026"})
 | `ScavioInstagramSearchHashtags` | Search Instagram hashtags by keyword |
 | `ScavioInstagramUserFollowers` | Fetch an Instagram user's followers |
 | `ScavioInstagramUserFollowings` | Fetch accounts an Instagram user is following |
+| `ScavioXSearch` | Search X (Twitter) tweets and people, Top/Latest/People/Photos/Videos |
+| `ScavioXTweet` | Fetch a single tweet with engagement counts and reply context |
+| `ScavioXTweetComments` | Fetch replies to a tweet, ranked or chronological |
+| `ScavioXTweetRetweeters` | Fetch the users who retweeted a tweet |
+| `ScavioXUser` | Fetch an X profile by handle |
+| `ScavioXUserTweets` | Fetch a user's tweets, plus their pinned tweet |
+| `ScavioXUserReplies` | Fetch a user's tweets and replies |
+| `ScavioXUserMedia` | Fetch a user's media tweets with direct photo/video URLs |
+| `ScavioXUserFollowers` | Fetch an X user's followers |
+| `ScavioXUserFollowings` | Fetch accounts an X user follows |
+| `ScavioXTrending` | Fetch trending topics on X for a country |
+| `ScavioLinkedInPerson` | Full LinkedIn member profile with experience and education |
+| `ScavioLinkedInPersonAbout` | About/overview section of a LinkedIn member |
+| `ScavioLinkedInPersonPosts` | A member's posts, comments, or reactions feed |
+| `ScavioLinkedInCompany` | LinkedIn company profile with locations and specialties |
+| `ScavioLinkedInCompanyPosts` | A company's recent LinkedIn posts |
+| `ScavioLinkedInSearchJobs` | Search LinkedIn job listings by keyword and location |
+| `ScavioLinkedInJob` | Full detail for one LinkedIn job listing |
+| `ScavioLinkedInPost` | A single LinkedIn post with its top visible comments |
+| `ScavioLinkedInPostComments` | Comments on a LinkedIn post, with replies |
 
 ## Use with a LangChain Agent
 
@@ -150,6 +219,13 @@ result = await tool.ainvoke({"query": "async python frameworks"})
 
 ### Google Search
 
+Every Google tool targets the v2 API (`/api/v2/google*`) and takes the v2 wire
+parameters directly: `gl`, `hl`, `start`, `google_domain` and `device`. Google
+v1 was retired on 2026-08-04 and now returns HTTP 410.
+
+`start` is a **0-based result offset, not a page number**: 0 is the first page,
+10 the second, 20 the third.
+
 ```python
 from langchain_scavio import ScavioSearch
 
@@ -160,11 +236,93 @@ tool = ScavioSearch(
     include_knowledge_graph=True,
     include_questions=True,
     include_related=False,
-    country_code="us",
-    language="en",
+    gl="us",                             # native v2 country
+    hl="en",                             # native v2 UI language
     search_type="classic",               # classic|news|maps
     device="desktop",
 )
+
+result = tool.invoke({"query": "vector databases", "start": 10})  # page 2
+```
+
+`country_code`, `language` and `page` still work as pre-3.2 aliases of `gl`,
+`hl` and `start`, but the native names win when both are supplied.
+
+### Google verticals
+
+Eleven more Google surfaces, 1 credit each. All of them return a **flat**
+response -- there is no `data` wrapper.
+
+```python
+from langchain_scavio import (
+    ScavioGoogleAIMode,
+    ScavioGoogleFlights,
+    ScavioGoogleHotels,
+    ScavioGoogleHotelsDetail,
+    ScavioGoogleMapsPlace,
+    ScavioGoogleMapsReviews,
+    ScavioGoogleShopping,
+    ScavioGoogleShoppingProduct,
+    ScavioGoogleShoppingStores,
+    ScavioGoogleTrending,
+    ScavioGoogleTrends,
+)
+
+# AI Mode: a synthesised answer with citations
+result = ScavioGoogleAIMode().invoke({"query": "how to cache LLM responses"})
+# result["text_blocks"] + result["references"]
+
+# Maps: place details and reviews (search lives on ScavioSearch search_type="maps")
+result = ScavioGoogleMapsPlace().invoke({"place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4"})
+result = ScavioGoogleMapsReviews(max_results=10).invoke({
+    "place_id": "ChIJN1t_tDeuEmsRUsoyG83frY4",
+    "sort_by": "newest",                 # relevance|newest|highest_rating|lowest_rating
+})
+
+# Shopping: sort_by is a NUMBER here, and start is an offset
+result = ScavioGoogleShopping(max_results=10).invoke({
+    "query": "mechanical keyboard",
+    "max_price": 150,
+    "sort_by": 1,                        # 0 relevance, 1 price asc, 2 price desc
+    "start": 60,
+})
+# ... but a STRING enum on the product endpoint
+result = ScavioGoogleShoppingProduct().invoke({
+    "catalog_id": "1234567890",
+    "query": "mechanical keyboard",      # required whenever catalog_id is set
+    "sort_by": "total_price",
+})
+result = ScavioGoogleShoppingStores().invoke({
+    "catalog_id": "1234567890",
+    "next_page_token": "...",            # from the product response
+})
+
+# Travel
+result = ScavioGoogleFlights().invoke({
+    "departure_id": "JFK",
+    "arrival_id": "LHR",
+    "outbound_date": "2026-09-01",
+    "type": 2,                           # 1 round trip (needs return_date), 2 one way
+})
+hotels = ScavioGoogleHotels(max_results=10).invoke({
+    "query": "Lisbon hotels",
+    "check_in_date": "2026-09-01",
+    "check_out_date": "2026-09-04",
+})
+# feed a property's detail_token back in -- and re-send both dates
+result = ScavioGoogleHotelsDetail().invoke({
+    "detail_token": hotels["properties"][0]["detail_token"],
+    "check_in_date": "2026-09-01",
+    "check_out_date": "2026-09-04",
+})
+
+# Trends uses an UPPERCASE geo, not gl; Trending has no query at all
+result = ScavioGoogleTrends().invoke({
+    "query": "langchain,llamaindex",     # comma-separate to compare terms
+    "geo": "US",
+    "date": "today 12-m",
+})
+result = ScavioGoogleTrending(max_results=10).invoke({"geo": "US", "hours": 24})
 ```
 
 ### Amazon
@@ -255,12 +413,56 @@ result = streams.invoke({"video_id": "dQw4w9WgXcQ"})
 # ScavioYouTubeMetadata is a deprecated alias of ScavioYouTubeVideo
 ```
 
-### Reddit
-
-Reddit endpoints cost 1 credit each.
+The other eight YouTube endpoints:
 
 ```python
-from langchain_scavio import ScavioRedditSearch, ScavioRedditPost
+from langchain_scavio import (
+    ScavioYouTubeChannelCommunity, ScavioYouTubeChannelResolve,
+    ScavioYouTubeChannelSearch, ScavioYouTubeChannelShorts,
+    ScavioYouTubeCommentReplies, ScavioYouTubeRelated,
+    ScavioYouTubeShorts, ScavioYouTubeSuggestions,
+)
+
+# Shorts search (2 credits per call)
+result = ScavioYouTubeShorts(max_results=10).invoke({"query": "funny cats"})
+
+# Keyword expansion before you spend a search
+result = ScavioYouTubeSuggestions().invoke({"query": "python tut", "region": "US"})
+
+# Replies need BOTH the video id and a comment's reply_cursor
+comments = ScavioYouTubeComments().invoke({"video_id": "dQw4w9WgXcQ"})
+result = ScavioYouTubeCommentReplies().invoke({
+    "video_id": "dQw4w9WgXcQ",
+    "reply_cursor": comments["data"]["comments"][0]["reply_cursor"],
+})
+
+# Related videos -- note: no next_cursor on this endpoint
+result = ScavioYouTubeRelated(max_results=10).invoke({"video_id": "dQw4w9WgXcQ"})
+
+# Find a channel, then reuse its UC id everywhere else
+result = ScavioYouTubeChannelSearch(max_results=5).invoke({"query": "mrbeast"})
+resolved = ScavioYouTubeChannelResolve().invoke({"channel": "@MrBeast"})
+channel_id = resolved["data"]["channel_id"]
+
+result = ScavioYouTubeChannelShorts(max_results=10).invoke({"channel_id": channel_id})
+# community posts land under data.posts, not data.results
+result = ScavioYouTubeChannelCommunity(max_results=10).invoke({
+    "channel_id": channel_id,
+})
+```
+
+### Reddit
+
+All 12 Reddit endpoints cost 1 credit each.
+
+```python
+from langchain_scavio import (
+    ScavioRedditSearch, ScavioRedditSearchSuggestions,
+    ScavioRedditPost, ScavioRedditPostComments, ScavioRedditCommentReplies,
+    ScavioRedditSubreddit, ScavioRedditSubredditPosts,
+    ScavioRedditUser, ScavioRedditUserPosts, ScavioRedditUserComments,
+    ScavioRedditPopular, ScavioRedditTrending,
+)
 
 search = ScavioRedditSearch(max_results=5)
 result = search.invoke({"query": "langchain"})
@@ -273,6 +475,10 @@ next_page = search.invoke({
     "cursor": result["data"]["next_cursor"],
 })
 
+# Expand a query before searching
+ScavioRedditSearchSuggestions().invoke({"query": "langchain"})
+# result["data"]["suggestions"] is a list of strings + total_count
+
 post = ScavioRedditPost()
 result = post.invoke({
     "url": "https://www.reddit.com/r/programming/comments/abc123/example_post/"
@@ -280,6 +486,50 @@ result = post.invoke({
 # result["data"] is a flat post object (post_id, title, text, score,
 # upvote_ratio, num_comments, media). It does NOT return comments.
 ```
+
+Comments are a separate endpoint, and replies are a separate endpoint again:
+
+```python
+comments = ScavioRedditPostComments(max_results=10).invoke({
+    "post_id": result["data"]["post_id"],   # 't3_...', a bare id, or a post URL
+    "sort": "TOP",                          # UPPERCASE; default TOP
+})
+# comments["data"]["comments"] -> comment_id, text, author, score, created_at,
+# depth, reply_cursor
+
+# To expand one comment's thread, pass THAT comment's reply_cursor -- a
+# next_cursor will not work here, and cursor is required.
+ScavioRedditCommentReplies().invoke({
+    "post_id": result["data"]["post_id"],
+    "cursor": comments["data"]["comments"][0]["reply_cursor"],
+})
+# -> data.replies, same comment shape
+```
+
+Subreddits, redditors and the site-wide feeds:
+
+```python
+ScavioRedditSubreddit().invoke({"subreddit": "programming"})
+# flat data: subscribers, active_count, description, icon, banner, is_nsfw
+
+ScavioRedditSubredditPosts(max_results=10).invoke({
+    "subreddit": "programming",
+    "sort": "RISING",   # BEST|HOT|NEW|TOP|CONTROVERSIAL|RISING, default HOT
+})
+# data.posts -- this feed shape has no body text, thumbnail or is_nsfw;
+# fetch a post_id through ScavioRedditPost for the full body
+
+ScavioRedditUser().invoke({"username": "spez"})          # flat profile + karma
+ScavioRedditUserPosts().invoke({"username": "spez", "sort": "TOP"})     # data.posts
+ScavioRedditUserComments().invoke({"username": "spez"})  # data.comments
+
+ScavioRedditPopular().invoke({})     # r/popular; cursor is its only parameter
+ScavioRedditTrending().invoke({})    # data.trending -> {query, raw_query}
+```
+
+Sort values are UPPERCASE and differ by endpoint: `RISING` is accepted only by
+`ScavioRedditSubredditPosts`, and the server default is `TOP` for comments,
+`HOT` for the subreddit feed and `NEW` for the user feeds.
 
 ### TikTok
 
@@ -448,6 +698,112 @@ search_hashtags = ScavioInstagramSearchHashtags(max_results=5)
 result = search_hashtags.invoke({"keyword": "travel"})
 ```
 
+### X (Twitter)
+
+Eleven endpoints, 1 credit each. The search field is literally `search`, and
+handles are passed without the leading `@`.
+
+```python
+from langchain_scavio import (
+    ScavioXSearch,
+    ScavioXTrending,
+    ScavioXTweetComments,
+    ScavioXUser,
+    ScavioXUserFollowings,
+    ScavioXUserTweets,
+)
+
+# Search tweets -- the field is `search`, not `query`
+search = ScavioXSearch(max_results=10)
+result = search.invoke({
+    "search": "langchain",
+    "search_type": "Latest",              # Top (default), Latest, People, Photos, Videos
+})
+# result["data"]["timeline"] + next_cursor + has_more
+
+# Profile and timeline
+result = ScavioXUser().invoke({"screen_name": "elonmusk"})
+result = ScavioXUserTweets().invoke({"screen_name": "elonmusk"})
+# user timelines return data.timeline + data.pinned + data.user (no has_more)
+
+# Replies to a tweet, ranked or chronological
+result = ScavioXTweetComments().invoke({
+    "tweet_id": "1808168603721650364",
+    "rank": "latest",                     # lowercase, unlike search_type
+})
+
+# Followings come back under data.following -- singular, not "followings"
+result = ScavioXUserFollowings().invoke({"screen_name": "elonmusk"})
+
+# Trending takes a country NAME, not an ISO code
+result = ScavioXTrending().invoke({"country": "UnitedStates"})
+```
+
+### LinkedIn
+
+Nine live endpoints across three credit tiers: profile and single-post reads
+cost 1, paginated list endpoints cost 10 per page, and job detail costs 30.
+
+```python
+from langchain_scavio import (
+    ScavioLinkedInCompany,
+    ScavioLinkedInJob,
+    ScavioLinkedInPersonPosts,
+    ScavioLinkedInPostComments,
+    ScavioLinkedInSearchJobs,
+)
+
+# Profiles are addressed by vanity handle or full URL
+result = ScavioLinkedInCompany().invoke({"company": "microsoft"})
+# data.featured_employees is a 4-6 person sample -- the employee directory
+# endpoint was retired upstream and is not exposed by this package
+
+# Post feeds: 50 per page, 10 credits per page
+posts = ScavioLinkedInPersonPosts(max_results=10)
+result = posts.invoke({
+    "username": "williamhgates",
+    "type": "posts",                      # posts (default), comments, reactions
+})
+
+# Job search rotates its result set between calls -- dedupe by job id
+jobs = ScavioLinkedInSearchJobs(max_results=10)
+result = jobs.invoke({"search": "software engineer", "location": "London"})
+
+# Job detail is the most expensive endpoint in the API (30 credits)
+result = ScavioLinkedInJob().invoke({"job_id": "4415427228"})
+
+# Post comments page by a 1-based number, not a cursor
+result = ScavioLinkedInPostComments().invoke({
+    "post_id": "7488618410256523265",
+    "page": 1,
+})
+```
+
+Five LinkedIn endpoints (`person/contact`, `company/people`, `company/jobs`,
+`search/people`, `search/posts`) were retired upstream and always return HTTP
+410. They are deliberately **not** exposed as tools: an agent calling them
+would only burn a turn. Use `ScavioLinkedInCompany` (`featured_employees`) and
+`ScavioLinkedInSearchJobs` with the company name instead.
+
+## Credit Costs
+
+Most endpoints cost 1 credit. The exceptions:
+
+| Tool | Credits |
+|------|---------|
+| `ScavioYouTubeTranscript` | 8 |
+| `ScavioYouTubeStreams` | 3 |
+| `ScavioYouTubeSearch`, `ScavioYouTubeShorts` | 2 |
+| `ScavioInstagramProfile`, `ScavioInstagramUserReels`, `ScavioInstagramTaggedPosts`, `ScavioInstagramStories`, `ScavioInstagramPostComments`, `ScavioInstagramSearchUsers`, `ScavioInstagramSearchHashtags`, `ScavioInstagramUserFollowers`, `ScavioInstagramUserFollowings` | 10 |
+| `ScavioInstagramPost`, `ScavioInstagramCommentReplies` | 8 |
+| `ScavioInstagramUserPosts` | 2 |
+| `ScavioLinkedInJob` | 30 |
+| `ScavioLinkedInPersonPosts`, `ScavioLinkedInCompanyPosts`, `ScavioLinkedInSearchJobs`, `ScavioLinkedInPostComments` | 10 |
+| everything else (all Google, X, TikTok, TikTok Shop, Amazon, Walmart, Reddit and the remaining YouTube tools) | 1 |
+
+Every tool states its own cost in its `description`, so an agent can see the
+price before it calls.
+
 ## Agent-Controllable Parameters
 
 ### ScavioSearch
@@ -552,11 +908,86 @@ them. Rank results yourself.
 Results come back in relevance order. There is no sort or result-type
 parameter: the endpoint accepts only `query` and `cursor`.
 
+### ScavioRedditSearchSuggestions
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | `str` | Partial query to autocomplete (1-500 chars) |
+
 ### ScavioRedditPost
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `url` | `str` | Full Reddit post URL (www., old., or new. subdomains accepted) |
+
+### ScavioRedditPostComments
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `post_id` | `str` | Post fullname `t3_...`, a bare post id, or a post URL |
+| `sort` | `HOT\|NEW\|TOP\|BEST\|CONTROVERSIAL` | UPPERCASE, default `TOP` |
+| `cursor` | `str` | Pagination cursor from a prior response's `next_cursor` |
+
+### ScavioRedditCommentReplies
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `post_id` | `str` | Post fullname `t3_...`, a bare post id, or a post URL |
+| `cursor` | `str` | **Required.** The `reply_cursor` of the comment to expand |
+| `sort` | `HOT\|NEW\|TOP\|BEST\|CONTROVERSIAL` | UPPERCASE, default `TOP` |
+
+`cursor` is the one place a `next_cursor` is not accepted: it must be the
+`reply_cursor` carried by a comment from `ScavioRedditPostComments`.
+
+### ScavioRedditSubreddit
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `subreddit` | `str` | Subreddit name without the `r/` prefix (1-100 chars) |
+
+### ScavioRedditSubredditPosts
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `subreddit` | `str` | Subreddit name without the `r/` prefix (1-100 chars) |
+| `sort` | `BEST\|HOT\|NEW\|TOP\|CONTROVERSIAL\|RISING` | UPPERCASE, default `HOT` |
+| `cursor` | `str` | Pagination cursor from a prior response's `next_cursor` |
+
+This is the only Reddit endpoint that accepts `RISING`.
+
+### ScavioRedditUser
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `username` | `str` | Reddit username without the `u/` prefix (1-100 chars) |
+
+### ScavioRedditUserPosts
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `username` | `str` | Reddit username without the `u/` prefix (1-100 chars) |
+| `sort` | `HOT\|NEW\|TOP\|BEST\|CONTROVERSIAL` | UPPERCASE, default `NEW` |
+| `cursor` | `str` | Pagination cursor from a prior response's `next_cursor` |
+
+### ScavioRedditUserComments
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `username` | `str` | Reddit username without the `u/` prefix (1-100 chars) |
+| `sort` | `HOT\|NEW\|TOP\|BEST\|CONTROVERSIAL` | UPPERCASE, default `NEW` |
+| `cursor` | `str` | Pagination cursor from a prior response's `next_cursor` |
+
+### ScavioRedditPopular
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `cursor` | `str` | Pagination cursor from a prior response's `next_cursor` |
+
+`cursor` is the endpoint's only parameter: no sort, no subreddit filter.
+
+### ScavioRedditTrending
+
+Takes no parameters. Invoke it with an empty dict.
 
 ### ScavioTikTokProfile
 
@@ -695,48 +1126,30 @@ parameter: the endpoint accepts only `query` and `cursor`.
 
 ## Architecture
 
+One `BaseTool` subclass per endpoint, each backed by an `APIWrapper` that owns
+a single URL. 96 tools over 97 endpoints (`ScavioSearch` covers three Google
+surfaces via `search_type`; `ScavioYouTubeMetadata` is a deprecated alias of
+`ScavioYouTubeVideo`).
+
 ```
-ScavioBaseAPIWrapper                      # Auth, headers, sync/async HTTP POST
-  +-- ScavioSearchAPIWrapper              # -> /api/v2/google (+ news, maps)
-  +-- ScavioAmazonSearchAPIWrapper        # -> /api/v1/amazon/search
-  +-- ScavioAmazonProductAPIWrapper       # -> /api/v1/amazon/product
-  +-- ScavioAmazonOffersAPIWrapper        # -> /api/v1/amazon/offers
-  +-- ScavioWalmartSearchAPIWrapper       # -> /api/v1/walmart/search
-  +-- ScavioWalmartProductAPIWrapper      # -> /api/v1/walmart/product
-  +-- ScavioYouTubeSearchAPIWrapper       # -> /api/v1/youtube/search
-  +-- ScavioYouTubeVideoAPIWrapper        # -> /api/v1/youtube/video
-  +-- ScavioYouTubeMetadataAPIWrapper     # -> /api/v1/youtube/video (deprecated alias)
-  +-- ScavioYouTubeCommentsAPIWrapper     # -> /api/v1/youtube/comments
-  +-- ScavioYouTubeTranscriptAPIWrapper   # -> /api/v1/youtube/transcript
-  +-- ScavioYouTubeChannelAPIWrapper      # -> /api/v1/youtube/channel
-  +-- ScavioYouTubeChannelVideosAPIWrapper# -> /api/v1/youtube/channel/videos
-  +-- ScavioYouTubeStreamsAPIWrapper      # -> /api/v1/youtube/streams
-  +-- ScavioRedditSearchAPIWrapper        # -> /api/v1/reddit/search
-  +-- ScavioRedditPostAPIWrapper          # -> /api/v1/reddit/post
-  +-- ScavioTikTokProfileAPIWrapper       # -> /api/v1/tiktok/profile
-  +-- ScavioTikTokUserPostsAPIWrapper     # -> /api/v1/tiktok/user/posts
-  +-- ScavioTikTokVideoAPIWrapper         # -> /api/v1/tiktok/video
-  +-- ScavioTikTokVideoCommentsAPIWrapper # -> /api/v1/tiktok/video/comments
-  +-- ScavioTikTokCommentRepliesAPIWrapper# -> /api/v1/tiktok/video/comments/replies
-  +-- ScavioTikTokSearchVideosAPIWrapper  # -> /api/v1/tiktok/search/videos
-  +-- ScavioTikTokSearchUsersAPIWrapper   # -> /api/v1/tiktok/search/users
-  +-- ScavioTikTokHashtagAPIWrapper       # -> /api/v1/tiktok/hashtag
-  +-- ScavioTikTokHashtagVideosAPIWrapper # -> /api/v1/tiktok/hashtag/videos
-  +-- ScavioTikTokUserFollowersAPIWrapper # -> /api/v1/tiktok/user/followers
-  +-- ScavioTikTokUserFollowingsAPIWrapper# -> /api/v1/tiktok/user/followings
-  +-- ScavioInstagramProfileAPIWrapper        # -> /api/v1/instagram/profile
-  +-- ScavioInstagramUserPostsAPIWrapper      # -> /api/v1/instagram/user/posts
-  +-- ScavioInstagramUserReelsAPIWrapper      # -> /api/v1/instagram/user/reels
-  +-- ScavioInstagramTaggedPostsAPIWrapper    # -> /api/v1/instagram/user/tagged
-  +-- ScavioInstagramStoriesAPIWrapper        # -> /api/v1/instagram/user/stories
-  +-- ScavioInstagramPostAPIWrapper           # -> /api/v1/instagram/post
-  +-- ScavioInstagramPostCommentsAPIWrapper   # -> /api/v1/instagram/post/comments
-  +-- ScavioInstagramCommentRepliesAPIWrapper # -> /api/v1/instagram/post/comments/replies
-  +-- ScavioInstagramSearchUsersAPIWrapper    # -> /api/v1/instagram/search/users
-  +-- ScavioInstagramSearchHashtagsAPIWrapper # -> /api/v1/instagram/search/hashtags
-  +-- ScavioInstagramUserFollowersAPIWrapper  # -> /api/v1/instagram/user/followers
-  +-- ScavioInstagramUserFollowingsAPIWrapper # -> /api/v1/instagram/user/followings
+ScavioBaseAPIWrapper                    # Auth, headers, rate limit, sync/async POST
+  |
+  +-- Google      12 tools -> /api/v2/google*        (14 endpoints)
+  +-- YouTube     16 tools -> /api/v1/youtube/*      (15 endpoints)
+  +-- Instagram   12 tools -> /api/v1/instagram/*
+  +-- Reddit      12 tools -> /api/v1/reddit/*
+  +-- TikTok      11 tools -> /api/v1/tiktok/*
+  +-- X           11 tools -> /api/v1/x/*
+  +-- LinkedIn     9 tools -> /api/v1/linkedin/*     (9 live; 5 retired, not exposed)
+  +-- TikTok Shop  8 tools -> /api/v1/tiktok-shop/*
+  +-- Amazon       3 tools -> /api/v1/amazon/*
+  +-- Walmart      2 tools -> /api/v1/walmart/*
 ```
+
+Source layout: `scavio_search.py` (Google), `scavio_youtube.py`,
+`scavio_instagram.py`, `scavio_tiktok.py`, `scavio_tiktok_shop.py`,
+`scavio_x.py`, `scavio_linkedin.py`, `scavio_amazon.py`, `scavio_walmart.py`,
+`scavio_reddit.py`, with every wrapper in `_utilities.py`.
 
 Each tool splits parameters into **init-only** (developer-controlled, e.g. `max_results`, `domain`) and **LLM-controllable** (passed via `args_schema` at invocation time, e.g. `query`, `sort_by`).
 
@@ -764,9 +1177,9 @@ MIT
 - [Google Search API](https://scavio.dev/google-search-api) — SERP results, news, images, maps, and knowledge graph
 - [Amazon Product API](https://scavio.dev/amazon-product-api) and [Walmart Product API](https://scavio.dev/walmart-product-api) — product search and details
 - [YouTube API](https://scavio.dev/youtube-transcript-api), [TikTok API](https://scavio.dev/tiktok-api), and [Instagram API](https://scavio.dev/instagram-api) — video and social media data
-- [Reddit API](https://scavio.dev/reddit-api) — posts and threaded comments
+- [Reddit API](https://scavio.dev/reddit-api) — posts, comments, subreddits, redditors, popular and trending feeds
 - TikTok Shop, X (formerly Twitter), and LinkedIn — product listings, tweets, profiles, company pages, and job listings
 
-X and LinkedIn are covered by the Scavio API but do not yet have tools in this package.
+Every billable Scavio endpoint has a tool in this package.
 
 Get a free [API key](https://dashboard.scavio.dev) and explore the [documentation](https://scavio.dev/docs/introduction).
