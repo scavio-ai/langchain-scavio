@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "langchain-scavio"
-version = "3.0"
+version = "3.1"
 description = "LangChain integration for Scavio Search API -- real-time Google, Amazon, Walmart, YouTube, Reddit, TikTok, and Instagram data with knowledge graphs and structured results"
 authors = ["Scavio"]
 readme = "README.md"
