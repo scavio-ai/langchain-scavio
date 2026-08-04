@@ -59,7 +59,7 @@ class TestRedditSearchRun:
         )
         result = reddit_search_tool.invoke({"query": "langchain"})
         assert "data" in result
-        assert len(result["data"]["posts"]) == 5  # truncated by max_results
+        assert len(result["data"]["results"]) == 5  # truncated by max_results
 
     @responses.activate
     def test_max_results_truncation(self) -> None:
@@ -71,7 +71,7 @@ class TestRedditSearchRun:
             status=200,
         )
         result = tool.invoke({"query": "test"})
-        assert len(result["data"]["posts"]) == 3
+        assert len(result["data"]["results"]) == 3
 
     @responses.activate
     def test_empty_results_raises_tool_exception(
@@ -85,7 +85,7 @@ class TestRedditSearchRun:
                     "searchQuery": "xyzzy",
                     "totalResults": 0,
                     "nextCursor": None,
-                    "posts": [],
+                    "results": [],
                 }
             ),
             status=200,
@@ -103,7 +103,7 @@ class TestRedditSearchRun:
         assert "error" in str(result).lower()
 
     @responses.activate
-    def test_sort_and_type_forwarded(
+    def test_phantom_params_not_forwarded(
         self, reddit_search_tool: ScavioRedditSearch
     ) -> None:
         import json as json_mod
@@ -115,12 +115,13 @@ class TestRedditSearchRun:
             status=200,
         )
         reddit_search_tool.invoke(
-            {"query": "python", "sort": "top", "type": "posts"}
+            {"query": "python"}
         )
         body = json_mod.loads(responses.calls[0].request.body)
         assert body["query"] == "python"
-        assert body["sort"] == "top"
-        assert body["type"] == "posts"
+        # /api/v1/reddit/search accepts only query + cursor
+        assert "sort" not in body
+        assert "type" not in body
 
     @responses.activate
     def test_cursor_forwarded(self, reddit_search_tool: ScavioRedditSearch) -> None:
@@ -176,7 +177,7 @@ class TestRedditSearchAsync:
         ):
             result = await reddit_search_tool.ainvoke({"query": "async test"})
             assert "data" in result
-            assert len(result["data"]["posts"]) == 5
+            assert len(result["data"]["results"]) == 5
 
     @pytest.mark.asyncio
     async def test_async_empty_results(
@@ -187,7 +188,7 @@ class TestRedditSearchAsync:
                 "searchQuery": "xyzzy",
                 "totalResults": 0,
                 "nextCursor": None,
-                "posts": [],
+                "results": [],
             }
         )
         with patch(
@@ -205,9 +206,9 @@ class TestRedditSearchInputSchema:
         input_schema = tool.get_input_schema().model_json_schema()
         props = input_schema["properties"]
         assert "query" in props
-        assert "type" in props
-        assert "sort" in props
         assert "cursor" in props
+        assert "type" not in props
+        assert "sort" not in props
 
     def test_query_is_required(self) -> None:
         tool = ScavioRedditSearch(scavio_api_key=MOCK_API_KEY)
@@ -252,8 +253,10 @@ class TestRedditPostRun:
             {"url": "https://www.reddit.com/r/programming/comments/abc123/ex/"}
         )
         assert "data" in result
-        assert result["data"]["post"]["id"] == "t3_abc123"
-        assert len(result["data"]["comments"]) == 2
+        assert result["data"]["post_id"] == "t3_abc123"
+        # /api/v1/reddit/post returns a flat post, no comment tree
+        assert "comments" not in result["data"]
+        assert result["data"]["num_comments"] == 87
 
     @responses.activate
     def test_empty_post_raises_tool_exception(
@@ -262,7 +265,7 @@ class TestRedditPostRun:
         responses.add(
             responses.POST,
             POST_ENDPOINT,
-            json=make_reddit_post_response(data={"post": None, "comments": []}),
+            json=make_reddit_post_response(data={}),
             status=200,
         )
         result = reddit_post_tool.invoke(
@@ -317,7 +320,7 @@ class TestRedditPostAsync:
     async def test_async_empty_post(
         self, reddit_post_tool: ScavioRedditPost
     ) -> None:
-        mock_resp = make_reddit_post_response(data={"post": None, "comments": []})
+        mock_resp = make_reddit_post_response(data={})
         with patch(
             "langchain_scavio._utilities.ScavioRedditPostAPIWrapper.raw_results_async",
             new_callable=AsyncMock,

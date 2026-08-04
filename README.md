@@ -20,8 +20,8 @@ Scavio is a full [Tavily alternative](https://scavio.dev/alternatives/tavily) bu
 
 | | Scavio | Tavily | SerpAPI |
 |---|---|---|---|
-| **Platforms** | Google, Amazon, Walmart, YouTube, Reddit, TikTok, TikTok Shop, Instagram | Google only | Google + others |
-| **Tools** | 46 | 1 | 1 per wrapper |
+| **Platforms** | Google, YouTube, Amazon, Walmart, Reddit, TikTok, TikTok Shop, Instagram, X, LinkedIn | Google only | Google + others |
+| **Tools** | 47 | 1 | 1 per wrapper |
 | **Knowledge graphs** | Yes | No | Partial |
 | **Product data** (price, rating, reviews) | Yes | No | No |
 | **Pricing** | $0.005/credit | $0.01/search | $0.05/search |
@@ -66,8 +66,8 @@ result = tool.invoke({"query": "best python web frameworks 2026"})
 | `ScavioYouTubeChannel` | Fetch channel details by ID, @handle, or URL |
 | `ScavioYouTubeChannelVideos` | Fetch a YouTube channel's uploaded videos |
 | `ScavioYouTubeStreams` | Fetch playable/downloadable stream URLs for a video |
-| `ScavioRedditSearch` | Search Reddit posts or comments with sort/pagination |
-| `ScavioRedditPost` | Fetch a Reddit post's metadata and comment thread by URL |
+| `ScavioRedditSearch` | Search Reddit posts with cursor pagination |
+| `ScavioRedditPost` | Fetch a Reddit post's metadata by URL (no comments) |
 | `ScavioTikTokProfile` | Look up a TikTok user profile by username or sec_user_id |
 | `ScavioTikTokUserPosts` | Fetch a TikTok user's posted videos with statistics |
 | `ScavioTikTokVideo` | Fetch details for a single TikTok video |
@@ -212,6 +212,7 @@ from langchain_scavio import (
     ScavioYouTubeChannelVideos, ScavioYouTubeStreams,
 )
 
+# Video search (2 credits per call)
 search = ScavioYouTubeSearch(max_results=5)
 result = search.invoke({
     "query": "python tutorial",
@@ -256,30 +257,28 @@ result = streams.invoke({"video_id": "dQw4w9WgXcQ"})
 
 ### Reddit
 
-Reddit endpoints cost 2 credits each and typically take 5-15 seconds (JS rendering required).
+Reddit endpoints cost 1 credit each.
 
 ```python
 from langchain_scavio import ScavioRedditSearch, ScavioRedditPost
 
 search = ScavioRedditSearch(max_results=5)
-result = search.invoke({
-    "query": "langchain",
-    "sort": "top",                       # new|relevance|hot|top|comments
-    "type": "posts",                     # posts|comments
-})
+result = search.invoke({"query": "langchain"})
+# result["data"]["results"] + next_cursor + has_more
+# Relevance order only: the endpoint has no sort or result-type filter
 
-# Paginate by passing back the previous response's nextCursor
+# Paginate by passing back the previous response's next_cursor
 next_page = search.invoke({
     "query": "langchain",
-    "sort": "top",
-    "cursor": result["data"]["nextCursor"],
+    "cursor": result["data"]["next_cursor"],
 })
 
 post = ScavioRedditPost()
 result = post.invoke({
     "url": "https://www.reddit.com/r/programming/comments/abc123/example_post/"
 })
-# result["data"]["post"] + result["data"]["comments"] (flat list with `depth`)
+# result["data"] is a flat post object (post_id, title, text, score,
+# upvote_ratio, num_comments, media). It does NOT return comments.
 ```
 
 ### TikTok
@@ -404,6 +403,10 @@ result["data"]["suggestions"]                # plain strings, no volume or score
 ```
 
 ### Instagram
+
+Instagram is priced per endpoint, not flat: 10 credits by default, 8 for
+`ScavioInstagramPost` and `ScavioInstagramCommentReplies`, and 2 for
+`ScavioInstagramUserPosts`.
 
 ```python
 from langchain_scavio import (
@@ -544,9 +547,10 @@ them. Rank results yourself.
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `query` | `str` | Reddit search query (1-500 chars) |
-| `type` | `str` | posts\|comments |
-| `sort` | `str` | new\|relevance\|hot\|top\|comments |
-| `cursor` | `str` | Opaque pagination cursor from prior response's `nextCursor` |
+| `cursor` | `str` | Opaque pagination cursor from prior response's `next_cursor` |
+
+Results come back in relevance order. There is no sort or result-type
+parameter: the endpoint accepts only `query` and `cursor`.
 
 ### ScavioRedditPost
 
@@ -761,5 +765,8 @@ MIT
 - [Amazon Product API](https://scavio.dev/amazon-product-api) and [Walmart Product API](https://scavio.dev/walmart-product-api) — product search and details
 - [YouTube API](https://scavio.dev/youtube-transcript-api), [TikTok API](https://scavio.dev/tiktok-api), and [Instagram API](https://scavio.dev/instagram-api) — video and social media data
 - [Reddit API](https://scavio.dev/reddit-api) — posts and threaded comments
+- TikTok Shop, X (formerly Twitter), and LinkedIn — product listings, tweets, profiles, company pages, and job listings
+
+X and LinkedIn are covered by the Scavio API but do not yet have tools in this package.
 
 Get a free [API key](https://dashboard.scavio.dev) and explore the [documentation](https://scavio.dev/docs/introduction).
