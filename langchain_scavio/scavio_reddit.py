@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal, Optional, Type
+from typing import Any, Optional, Type
 
 from langchain_core.callbacks import (
     AsyncCallbackManagerForToolRun,
@@ -33,35 +33,22 @@ class ScavioRedditSearchInput(BaseModel):
         max_length=500,
     )
 
-    type: Optional[Literal["posts", "comments"]] = Field(
-        default=None,
-        description='Search scope. Options: "posts" (default), "comments".',
-    )
-
-    sort: Optional[
-        Literal["new", "relevance", "hot", "top", "comments"]
-    ] = Field(
-        default=None,
-        description=(
-            'Sort order. Options: "new" (default), "relevance", "hot", "top", '
-            '"comments".'
-        ),
-    )
-
     cursor: Optional[str] = Field(
         default=None,
         description=(
-            "Pagination cursor from a previous response's nextCursor. "
-            "Keep query/type/sort the same across paginated calls."
+            "Pagination cursor from a previous response's next_cursor. "
+            "Keep query the same across paginated calls."
         ),
     )
 
 
 class ScavioRedditSearch(BaseTool):  # type: ignore[override]
-    """Search Reddit posts or comments using the Scavio API.
+    """Search Reddit posts using the Scavio API.
 
-    Returns Reddit posts with titles, URLs, subreddits, authors, and timestamps.
-    Supports pagination via an opaque cursor.
+    Returns Reddit posts with titles, URLs, subreddits, authors, and timestamps
+    under ``data.results``. Supports pagination via an opaque cursor.
+
+    The API returns relevance order only; it has no sort or result-type filter.
 
     Note: Reddit requires JS rendering; responses typically take 5-15 seconds.
 
@@ -84,14 +71,14 @@ class ScavioRedditSearch(BaseTool):  # type: ignore[override]
     Invoke directly:
         .. code-block:: python
 
-            result = tool.invoke({"query": "langchain", "sort": "new"})
+            result = tool.invoke({"query": "langchain"})
     """
 
     name: str = "scavio_reddit_search"
     description: str = (
-        "Search Reddit posts or comments using the Scavio API. "
-        "Returns post titles, URLs, subreddits, authors, and timestamps. "
-        "Supports sort orders (new, relevance, hot, top, comments) and pagination. "
+        "Search Reddit posts using the Scavio API. "
+        "Returns post titles, URLs, subreddits, authors, and timestamps "
+        "under data.results, in relevance order. Supports cursor pagination. "
         "Input should be a search query."
     )
     args_schema: Type[BaseModel] = ScavioRedditSearchInput
@@ -120,8 +107,6 @@ class ScavioRedditSearch(BaseTool):  # type: ignore[override]
     def _run(
         self,
         query: str,
-        type: Optional[str] = None,
-        sort: Optional[str] = None,
         cursor: Optional[str] = None,
         *,
         run_manager: Optional[CallbackManagerForToolRun] = None,
@@ -137,8 +122,6 @@ class ScavioRedditSearch(BaseTool):  # type: ignore[override]
         try:
             raw = self.api_wrapper.raw_results(
                 query=query,
-                type=type,
-                sort=sort,
                 cursor=cursor,
             )
             return self._process_response(raw, query)
@@ -150,8 +133,6 @@ class ScavioRedditSearch(BaseTool):  # type: ignore[override]
     async def _arun(
         self,
         query: str,
-        type: Optional[str] = None,
-        sort: Optional[str] = None,
         cursor: Optional[str] = None,
         *,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
@@ -167,8 +148,6 @@ class ScavioRedditSearch(BaseTool):  # type: ignore[override]
         try:
             raw = await self.api_wrapper.raw_results_async(
                 query=query,
-                type=type,
-                sort=sort,
                 cursor=cursor,
             )
             return self._process_response(raw, query)
@@ -178,15 +157,14 @@ class ScavioRedditSearch(BaseTool):  # type: ignore[override]
             return {"error": str(e)}
 
     def _process_response(self, raw: dict[str, Any], query: str) -> dict[str, Any]:
-        """Truncate posts and raise ToolException if empty."""
+        """Truncate results and raise ToolException if empty."""
         data = raw.get("data") or {}
-        posts = data.get("posts") if isinstance(data, dict) else None
-        if self.max_results and posts:
-            raw["data"]["posts"] = posts[: self.max_results]
-        if not (isinstance(data, dict) and data.get("posts")):
+        results = data.get("results") if isinstance(data, dict) else None
+        if self.max_results and results:
+            raw["data"]["results"] = results[: self.max_results]
+        if not results:
             raise ToolException(
-                f"No Reddit results found for '{query}'. "
-                "Try broadening the query or changing the sort order."
+                f"No Reddit results found for '{query}'. Try broadening the query."
             )
         return raw
 
@@ -205,16 +183,17 @@ class ScavioRedditPostInput(BaseModel):
 
 
 class ScavioRedditPost(BaseTool):  # type: ignore[override]
-    """Fetch a Reddit post's metadata and comment thread.
+    """Fetch a single Reddit post's metadata.
 
-    Returns post fields (title, body, score, awards, media) plus a flat list
-    of comments with a ``depth`` field for reconstructing the reply tree.
-    Pairs with ScavioRedditSearch -- feed any post URL from search results
-    directly into this tool.
+    Returns the post as a flat object under ``data``: post_id, title, text,
+    url, subreddit, author, score, upvote_ratio, num_comments, created_at,
+    is_nsfw, is_video, thumbnail, media. Pairs with ScavioRedditSearch --
+    feed any post URL from search results directly into this tool.
+
+    This endpoint does NOT return comments. Use the post_id it returns with
+    the Scavio /reddit/post/comments endpoint to fetch the comment thread.
 
     Note: Reddit requires JS rendering; responses typically take 5-15 seconds.
-    Only the initial comment view is returned; lazy-loaded "more replies" are
-    not fetched, so ``commentCount`` may exceed ``len(comments)``.
 
     Setup:
         Install ``langchain-scavio`` and set the ``SCAVIO_API_KEY`` environment
@@ -242,9 +221,9 @@ class ScavioRedditPost(BaseTool):  # type: ignore[override]
 
     name: str = "scavio_reddit_post"
     description: str = (
-        "Fetch a single Reddit post's metadata and comment thread. "
-        "Returns the post (title, body, score, media, flair) and a flat list "
-        "of comments with depth for reconstructing the tree. "
+        "Fetch a single Reddit post's metadata by URL. "
+        "Returns a flat post object (title, text, score, upvote_ratio, "
+        "num_comments, media) under data. Does not return comments. "
         "Use ScavioRedditSearch to find post URLs. "
         "Input should be a full Reddit post URL."
     )
@@ -302,10 +281,13 @@ class ScavioRedditPost(BaseTool):  # type: ignore[override]
             return {"error": str(e)}
 
     def _process_response(self, raw: dict[str, Any], url: str) -> dict[str, Any]:
-        """Raise ToolException if no post data returned."""
+        """Raise ToolException if no post data returned.
+
+        /api/v1/reddit/post returns the post as a flat object under `data`
+        (post_id, title, text, ...), not nested under a `post` key.
+        """
         data = raw.get("data") or {}
-        post = data.get("post") if isinstance(data, dict) else None
-        if not post:
+        if not (isinstance(data, dict) and data.get("post_id")):
             raise ToolException(
                 f"No Reddit post found at '{url}'. "
                 "Verify the URL points to a valid Reddit post."

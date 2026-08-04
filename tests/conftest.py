@@ -543,31 +543,36 @@ def youtube_streams_tool() -> ScavioYouTubeStreams:
 
 
 def make_reddit_search_response(**overrides: Any) -> dict[str, Any]:
-    """Build a mock Reddit search API response (actual structure: data.posts)."""
-    posts = [
+    """Build a mock Reddit search API response (actual structure: data.results)."""
+    results = [
         {
-            "position": i,
-            "id": f"t3_{i:08d}",
+            "post_id": f"t3_{i:08d}",
             "title": f"Reddit Post {i}",
+            "text": f"body text {i}",
             "url": (
                 f"https://www.reddit.com/r/test/comments/{i:08d}/reddit_post_{i}/"
             ),
             "subreddit": "test",
             "author": f"user{i}",
-            "timestamp": "2026-04-15T16:34:40.389000+0000",
-            "nsfw": False,
+            "score": 10 + i,
+            "upvote_ratio": 0.95,
+            "num_comments": i,
+            "created_at": "2026-04-15T16:34:40.389000+0000",
+            "is_nsfw": False,
+            "is_video": False,
+            "thumbnail": None,
+            "media": [],
         }
         for i in range(0, 10)
     ]
     base: dict[str, Any] = {
         "data": {
-            "searchQuery": "test query",
-            "totalResults": len(posts),
-            "nextCursor": "eyJjYW5kaWRhdGVzX3JldH...",
-            "posts": posts,
+            "results": results,
+            "next_cursor": "eyJjYW5kaWRhdGVzX3JldH...",
+            "has_more": True,
         },
         "response_time": 5200,
-        "credits_used": 2,
+        "credits_used": 1,
         "credits_remaining": 498,
     }
     base.update(overrides)
@@ -575,55 +580,29 @@ def make_reddit_search_response(**overrides: Any) -> dict[str, Any]:
 
 
 def make_reddit_post_response(**overrides: Any) -> dict[str, Any]:
-    """Build a mock Reddit post detail API response."""
+    """Build a mock Reddit post detail response (flat post object under data)."""
     base: dict[str, Any] = {
         "data": {
-            "post": {
-                "id": "t3_abc123",
-                "title": "Example post title",
-                "author": "op_user",
-                "subreddit": "programming",
-                "url": (
-                    "https://www.reddit.com/r/programming/comments/abc123/"
-                    "example_post/"
-                ),
-                "contentUrl": "https://external-site.com/article",
-                "permalink": "/r/programming/comments/abc123/example_post/",
-                "body": "post body",
-                "score": 42,
-                "commentCount": 87,
-                "awardCount": 13,
-                "timestamp": "2026-04-15T16:34:40.389000+0000",
-                "nsfw": False,
-                "postType": "text",
-                "domain": "self.programming",
-                "flair": None,
-                "featuredAward": None,
-                "media": [],
-            },
-            "comments": [
-                {
-                    "id": "t1_c1",
-                    "author": "user1",
-                    "body": "top-level reply",
-                    "score": 5,
-                    "depth": 0,
-                    "timestamp": "2026-04-16T07:00:00.000000+0000",
-                    "permalink": "/r/programming/comments/abc123/comment/c1/",
-                },
-                {
-                    "id": "t1_c2",
-                    "author": "user2",
-                    "body": "nested reply",
-                    "score": 2,
-                    "depth": 1,
-                    "timestamp": "2026-04-16T08:00:00.000000+0000",
-                    "permalink": "/r/programming/comments/abc123/comment/c2/",
-                },
-            ],
+            "post_id": "t3_abc123",
+            "title": "Example post title",
+            "text": "post body",
+            "url": (
+                "https://www.reddit.com/r/programming/comments/abc123/"
+                "example_post/"
+            ),
+            "subreddit": "programming",
+            "author": "op_user",
+            "score": 42,
+            "upvote_ratio": 0.97,
+            "num_comments": 87,
+            "created_at": "2026-04-15T16:34:40.389000+0000",
+            "is_nsfw": False,
+            "is_video": False,
+            "thumbnail": None,
+            "media": [],
         },
         "response_time": 5200,
-        "credits_used": 2,
+        "credits_used": 1,
         "credits_remaining": 498,
     }
     base.update(overrides)
