@@ -3,9 +3,15 @@
 ``ScavioSearch`` is the general web-search tool; the ``ScavioGoogle*`` tools
 below cover the remaining Google v2 verticals. Google v1 (``/api/v1/google``)
 was retired on 2026-08-04 and now returns HTTP 410 -- every tool here targets
-``/api/v2/google*`` and exposes the v2 wire parameters (``gl``, ``hl``,
-``start``, ``google_domain``, ``device``) natively. ``start`` is a 0-based
-result offset, never a page number.
+``/api/v2/google*`` and exposes the v2 wire parameters natively. ``start`` is a
+0-based result offset, never a page number.
+
+Since 3.4 every parameter the endpoint accepts is on the args_schema, so an
+agent can reach all of it per call. That includes ``include_html``, which
+inlines Google's raw markup: it stays off by default and its description says
+so, because the payload is large enough to crowd a model's context and the
+parsed fields already carry the answer. It is exposed rather than hidden so a
+caller that genuinely wants the markup is not stuck.
 """
 
 from __future__ import annotations
@@ -54,7 +60,9 @@ def _forward_api_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
     return api_kwargs
 
 
-# Parameters that can only be set at instantiation, not by the LLM.
+# Parameters that can only be set at instantiation, not by the LLM. These are
+# response-shaping switches, not wire params -- every /api/v2/google request
+# parameter is on the args_schema and settable per call.
 _INIT_ONLY_PARAMS = frozenset(
     {
         "max_results",
@@ -71,8 +79,26 @@ _INIT_ONLY_PARAMS = frozenset(
         "include_shopping_ads",
         "include_top_ads",
         "include_bottom_ads",
-        "nfpr",
     }
+)
+
+# Native /api/v2/google params the LLM can set per call. Each one also exists
+# as a constructor attribute used as the default when the call omits it.
+_NATIVE_SEARCH_PARAMS = (
+    "gl",
+    "hl",
+    "start",
+    "google_domain",
+    "location",
+    "uule",
+    "lr",
+    "cr",
+    "safe",
+    "nfpr",
+    "filter",
+    "time_period",
+    "resolve_ai_overview",
+    "include_html",
 )
 
 
@@ -136,6 +162,99 @@ class ScavioSearchInput(BaseModel):
         description=(
             'Regional Google domain to query (e.g., "google.co.uk"). '
             "Native Google v2 parameter."
+        ),
+    )
+
+    location: Optional[str] = Field(
+        default=None,
+        description=(
+            'Canonical location name (e.g., "Austin, Texas, United States"), '
+            "encoded to a UULE string server-side. Use it for local intent; "
+            "gl only sets the country. Classic search only."
+        ),
+    )
+
+    uule: Optional[str] = Field(
+        default=None,
+        description=(
+            "Pre-encoded UULE location string. Takes priority over location. "
+            "Only set this when you already have a UULE value. Classic search "
+            "only."
+        ),
+    )
+
+    lr: Optional[str] = Field(
+        default=None,
+        description=(
+            'Language restrict: return only pages in that language, e.g. '
+            '"lang_en", "lang_fr". Different from hl, which sets the UI '
+            "language. Classic search only."
+        ),
+    )
+
+    cr: Optional[str] = Field(
+        default=None,
+        description=(
+            'Country restrict: return only pages from that country, e.g. '
+            '"countryUS", "countryDE". Different from gl, which sets where the '
+            "search is run from. Classic search only."
+        ),
+    )
+
+    safe: Optional[Literal["active"]] = Field(
+        default=None,
+        description=(
+            'SafeSearch filter. The only accepted value is "active"; omit it '
+            "to leave SafeSearch off. Classic search only."
+        ),
+    )
+
+    nfpr: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Set true to disable Google's spelling correction and get results "
+            "for exactly the query as typed. Classic search only."
+        ),
+    )
+
+    filter: Optional[Literal["0", "1"]] = Field(
+        default=None,
+        description=(
+            'Omitted/similar-results filter, as a STRING not a number: "0" '
+            'turns the filter off and returns the duplicates Google normally '
+            'hides, "1" leaves it on. Classic search only.'
+        ),
+    )
+
+    time_period: Optional[
+        Literal["last_hour", "last_day", "last_week", "last_month", "last_year"]
+    ] = Field(
+        default=None,
+        description=(
+            "Restrict results to a recent time window. Options: last_hour, "
+            "last_day, last_week, last_month, last_year. Use this for "
+            '"recent"/"latest" queries instead of switching search_type. '
+            "Classic search only."
+        ),
+    )
+
+    resolve_ai_overview: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Resolve a deferred AI Overview with a second upstream call "
+            "(server default true, still 1 credit). Set false to skip it and "
+            "answer faster when the AI Overview is not needed. Classic search "
+            "only."
+        ),
+    )
+
+    include_html: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Inline Google's raw result-page HTML under `html`. Off by "
+            "default and very large - only set it when you need the markup "
+            "itself, never just to read the results, which are already parsed "
+            "into the response. Classic search only."
         ),
     )
 
@@ -244,7 +363,9 @@ class ScavioSearch(BaseTool):  # type: ignore[override]
         "Search the web using the Scavio Search API. Returns search results "
         "with titles, URLs, descriptions, knowledge graphs, news results, "
         "and related questions. Use for any query requiring real-time or "
-        "recent web information. Input should be a search query. "
+        "recent web information. Narrow with time_period, safe, lr/cr and "
+        "location; page with start, which is a 0-based result offset (0, 10, "
+        "20, ...), not a page number. Input should be a search query. "
         "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioSearchInput
@@ -267,15 +388,24 @@ class ScavioSearch(BaseTool):  # type: ignore[override]
     include_shopping_ads: bool = False
     include_top_ads: bool = False
     include_bottom_ads: bool = False
-    nfpr: bool = False
 
     # Default search parameters (used when the LLM doesn't specify).
-    # gl/hl/start/google_domain are the native Google v2 names; country_code,
-    # language and page are the pre-3.2 aliases and lose to them when both set.
+    # These are the native Google v2 names; country_code, language and page are
+    # the pre-3.2 aliases and lose to them when both are set.
     gl: Optional[str] = None
     hl: Optional[str] = None
     start: Optional[int] = None
     google_domain: Optional[str] = None
+    location: Optional[str] = None
+    uule: Optional[str] = None
+    lr: Optional[str] = None
+    cr: Optional[str] = None
+    safe: Optional[str] = None
+    nfpr: Optional[bool] = None
+    filter: Optional[str] = None
+    time_period: Optional[str] = None
+    resolve_ai_overview: Optional[bool] = None
+    include_html: Optional[bool] = None
     country_code: Optional[str] = None
     language: Optional[str] = None
     search_type: Optional[str] = None
@@ -312,28 +442,26 @@ class ScavioSearch(BaseTool):  # type: ignore[override]
         language: Optional[str],
         device: Optional[str],
         page: Optional[int],
-        gl: Optional[str] = None,
-        hl: Optional[str] = None,
-        start: Optional[int] = None,
-        google_domain: Optional[str] = None,
+        **native: Any,
     ) -> dict[str, Any]:
         """Merge LLM-provided params with init-time defaults.
 
-        Native v2 arguments (gl, hl, start, google_domain) are passed through
-        untouched; the legacy country_code/language/page aliases are only used
-        when their v2 counterpart is absent.
+        Native v2 arguments (gl, hl, start, safe, time_period, ...) are passed
+        through untouched, falling back to the constructor default of the same
+        name; the legacy country_code/language/page aliases are only used when
+        their v2 counterpart is absent.
         """
-        return {
+        params: dict[str, Any] = {
             "search_type": search_type or self.search_type or "classic",
             "country_code": country_code or self.country_code,
             "language": language or self.language,
             "device": device or self.device or "desktop",
             "page": page or self.page or 1,
-            "gl": gl or self.gl,
-            "hl": hl or self.hl,
-            "start": start if start is not None else self.start,
-            "google_domain": google_domain or self.google_domain,
         }
+        for name in _NATIVE_SEARCH_PARAMS:
+            value = native.get(name)
+            params[name] = getattr(self, name) if value is None else value
+        return params
 
     def _run(
         self,
@@ -347,6 +475,16 @@ class ScavioSearch(BaseTool):  # type: ignore[override]
         hl: Optional[str] = None,
         start: Optional[int] = None,
         google_domain: Optional[str] = None,
+        location: Optional[str] = None,
+        uule: Optional[str] = None,
+        lr: Optional[str] = None,
+        cr: Optional[str] = None,
+        safe: Optional[str] = None,
+        nfpr: Optional[bool] = None,
+        filter: Optional[str] = None,
+        time_period: Optional[str] = None,
+        resolve_ai_overview: Optional[bool] = None,
+        include_html: Optional[bool] = None,
         *,
         run_manager: Optional[CallbackManagerForToolRun] = None,
         **kwargs: Any,
@@ -360,14 +498,16 @@ class ScavioSearch(BaseTool):  # type: ignore[override]
             )
         params = self._resolve_params(
             search_type, country_code, language, device, page,
-            gl, hl, start, google_domain,
+            gl=gl, hl=hl, start=start, google_domain=google_domain,
+            location=location, uule=uule, lr=lr, cr=cr, safe=safe, nfpr=nfpr,
+            filter=filter, time_period=time_period,
+            resolve_ai_overview=resolve_ai_overview, include_html=include_html,
         )
         try:
             raw = self.api_wrapper.raw_results(
                 query=query,
                 **params,
                 light_request=self.light_request,
-                nfpr=self.nfpr,
             )
             return self._process_response(
                 raw,
@@ -393,6 +533,16 @@ class ScavioSearch(BaseTool):  # type: ignore[override]
         hl: Optional[str] = None,
         start: Optional[int] = None,
         google_domain: Optional[str] = None,
+        location: Optional[str] = None,
+        uule: Optional[str] = None,
+        lr: Optional[str] = None,
+        cr: Optional[str] = None,
+        safe: Optional[str] = None,
+        nfpr: Optional[bool] = None,
+        filter: Optional[str] = None,
+        time_period: Optional[str] = None,
+        resolve_ai_overview: Optional[bool] = None,
+        include_html: Optional[bool] = None,
         *,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
         **kwargs: Any,
@@ -406,14 +556,16 @@ class ScavioSearch(BaseTool):  # type: ignore[override]
             )
         params = self._resolve_params(
             search_type, country_code, language, device, page,
-            gl, hl, start, google_domain,
+            gl=gl, hl=hl, start=start, google_domain=google_domain,
+            location=location, uule=uule, lr=lr, cr=cr, safe=safe, nfpr=nfpr,
+            filter=filter, time_period=time_period,
+            resolve_ai_overview=resolve_ai_overview, include_html=include_html,
         )
         try:
             raw = await self.api_wrapper.raw_results_async(
                 query=query,
                 **params,
                 light_request=self.light_request,
-                nfpr=self.nfpr,
             )
             return self._process_response(
                 raw,
@@ -542,6 +694,16 @@ class ScavioGoogleAIModeInput(BaseModel):
         description="SafeSearch filter. The only accepted value is 'active'.",
     )
 
+    include_html: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Inline Google's raw HTML under `html`. Off by default and very "
+            "large - only set it when you need the markup itself, never just "
+            "to read the answer, which is already parsed into text_blocks and "
+            "references."
+        ),
+    )
+
 
 class ScavioGoogleAIMode(BaseTool):  # type: ignore[override]
     """Ask Google AI Mode a question using the Scavio API.
@@ -551,12 +713,14 @@ class ScavioGoogleAIMode(BaseTool):  # type: ignore[override]
     commercial. The response is flat -- there is no ``data`` wrapper.
 
     This endpoint is a strict subset of the SERP parameters: there is no
-    ``start``, no time filter and no spelling-correction toggle.
+    ``start``, no ``lr``/``cr``/``filter``/``nfpr``/``time_period`` and no
+    ``resolve_ai_overview``.
 
-    The API also accepts ``include_html``, which inlines Google's raw HTML.
-    It is deliberately not exposed here (nor on ``ScavioSearch``): the payload
-    is large enough to swamp a model's context and carries nothing the parsed
-    fields do not already have.
+    ``include_html`` inlines Google's raw markup. It is exposed (3.4) but
+    defaults to off and says so in its description: the payload is large enough
+    to swamp a model's context and carries nothing ``text_blocks`` and
+    ``references`` do not already have. Hiding it made the capability
+    unreachable, which is the worse failure.
 
     Setup:
         .. code-block:: bash
@@ -609,6 +773,7 @@ class ScavioGoogleAIMode(BaseTool):  # type: ignore[override]
         location: Optional[str] = None,
         uule: Optional[str] = None,
         safe: Optional[str] = None,
+        include_html: Optional[bool] = None,
         *,
         run_manager: Optional[CallbackManagerForToolRun] = None,
         **kwargs: Any,
@@ -624,6 +789,7 @@ class ScavioGoogleAIMode(BaseTool):  # type: ignore[override]
                 location=location,
                 uule=uule,
                 safe=safe,
+                include_html=include_html,
             )
             return self._process_response(raw, query)
         except ToolException:
@@ -641,6 +807,7 @@ class ScavioGoogleAIMode(BaseTool):  # type: ignore[override]
         location: Optional[str] = None,
         uule: Optional[str] = None,
         safe: Optional[str] = None,
+        include_html: Optional[bool] = None,
         *,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
         **kwargs: Any,
@@ -656,6 +823,7 @@ class ScavioGoogleAIMode(BaseTool):  # type: ignore[override]
                 location=location,
                 uule=uule,
                 safe=safe,
+                include_html=include_html,
             )
             return self._process_response(raw, query)
         except ToolException:

@@ -12,10 +12,10 @@ plans against and the API cannot keep. The API answers with a top-level
 ``warnings`` array if one is sent anyway.
 
 ``country`` (ISO 3166-1 alpha-2, e.g. ``us``, ``gb``, ``de``) is the canonical
-marketplace selector. ``domain`` and ``start_page`` still work on the wire as
-deprecated aliases, so they are forwarded when a caller passes them, but they
-are kept out of the model-facing schema: an LLM should only ever see one
-spelling of a parameter.
+marketplace selector. ``domain`` and ``start_page`` are deprecated wire aliases
+that the API still accepts; they are declared on the schema so nothing the
+endpoint takes is unreachable, but every description points back at ``country``
+and ``page``. A native value always wins over its alias.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from langchain_core.callbacks import (
     CallbackManagerForToolRun,
 )
 from langchain_core.tools import BaseTool, ToolException
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from langchain_scavio._utilities import (
     ScavioAmazonOffersAPIWrapper,
@@ -46,14 +46,20 @@ _COUNTRY_DESCRIPTION = (
     "An unrecognised code silently falls back to us."
 )
 
-# Deprecated wire aliases. Still accepted by the API, still forwarded when a
-# caller passes one, but never advertised to the model.
-_LEGACY_ALIASES = ("domain", "start_page")
+_ASIN_DESCRIPTION = (
+    "Amazon ASIN, the 10-character product code (e.g., 'B08N5WRWNW'). "
+    "Use ScavioAmazonSearch first to find ASINs if needed."
+)
 
+_DOMAIN_DESCRIPTION = (
+    "Deprecated: Amazon domain suffix ('com', 'co.uk'). Prefer country, which "
+    "is what the marketplace actually selects on; when both are given country "
+    "wins."
+)
 
-def _legacy(kwargs: dict[str, Any]) -> dict[str, Any]:
-    """Pull the deprecated wire aliases out of invocation kwargs."""
-    return {k: kwargs[k] for k in _LEGACY_ALIASES if kwargs.get(k) is not None}
+_START_PAGE_DESCRIPTION = (
+    "Deprecated alias of page. Prefer page; when both are given page wins."
+)
 
 
 class ScavioAmazonSearchInput(BaseModel):
@@ -72,6 +78,12 @@ class ScavioAmazonSearchInput(BaseModel):
             "Only increase if the user asks for more results or the previous "
             "page did not contain the needed information."
         ),
+    )
+
+    domain: Optional[str] = Field(default=None, description=_DOMAIN_DESCRIPTION)
+
+    start_page: Optional[int] = Field(
+        default=None, description=_START_PAGE_DESCRIPTION
     )
 
 
@@ -147,6 +159,8 @@ class ScavioAmazonSearch(BaseTool):  # type: ignore[override]
         query: str,
         country: Optional[str] = None,
         page: Optional[int] = None,
+        domain: Optional[str] = None,
+        start_page: Optional[int] = None,
         *,
         run_manager: Optional[CallbackManagerForToolRun] = None,
         **kwargs: Any,
@@ -157,7 +171,8 @@ class ScavioAmazonSearch(BaseTool):  # type: ignore[override]
                 query=query,
                 country=country,
                 page=page,
-                **_legacy(kwargs),
+                domain=domain,
+                start_page=start_page,
             )
             return self._process_response(raw, query)
         except ToolException:
@@ -170,6 +185,8 @@ class ScavioAmazonSearch(BaseTool):  # type: ignore[override]
         query: str,
         country: Optional[str] = None,
         page: Optional[int] = None,
+        domain: Optional[str] = None,
+        start_page: Optional[int] = None,
         *,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
         **kwargs: Any,
@@ -180,7 +197,8 @@ class ScavioAmazonSearch(BaseTool):  # type: ignore[override]
                 query=query,
                 country=country,
                 page=page,
-                **_legacy(kwargs),
+                domain=domain,
+                start_page=start_page,
             )
             return self._process_response(raw, query)
         except ToolException:
@@ -202,19 +220,42 @@ class ScavioAmazonSearch(BaseTool):  # type: ignore[override]
         return raw
 
 
-class ScavioAmazonProductInput(BaseModel):
+class _AsinAliasMixin(BaseModel):
+    """Fill ``asin`` from the deprecated ``query`` spelling.
+
+    The wire field on /amazon/product and /amazon/offers is called ``query``
+    even though it only ever carries an ASIN. ``asin`` is the name the rest of
+    Scavio uses, so it is the required, model-facing one here; ``query`` stays
+    accepted so pre-3.4 callers keep working.
+    """
+
+    @model_validator(mode="before")
+    @classmethod
+    def _asin_from_query(cls, values: Any) -> Any:
+        if isinstance(values, dict) and not values.get("asin"):
+            if values.get("query"):
+                values = {**values, "asin": values["query"]}
+        return values
+
+
+class ScavioAmazonProductInput(_AsinAliasMixin):
     """Input schema for ScavioAmazonProduct tool."""
 
     model_config = ConfigDict(extra="allow")
 
-    query: str = Field(
-        description=(
-            "Amazon product ASIN code (e.g., 'B08N5WRWNW'). "
-            "Use ScavioAmazonSearch first to find ASINs if needed."
-        )
-    )
+    asin: str = Field(description=_ASIN_DESCRIPTION)
 
     country: Optional[str] = Field(default=None, description=_COUNTRY_DESCRIPTION)
+
+    domain: Optional[str] = Field(default=None, description=_DOMAIN_DESCRIPTION)
+
+    query: Optional[str] = Field(
+        default=None,
+        description=(
+            "Deprecated spelling of asin, kept for backwards compatibility. "
+            "Prefer asin; when both are given asin wins."
+        ),
+    )
 
 
 class ScavioAmazonProduct(BaseTool):  # type: ignore[override]
@@ -223,6 +264,10 @@ class ScavioAmazonProduct(BaseTool):  # type: ignore[override]
     Returns title, brand, description, features, price, list price, rating,
     availability, images, videos, best-seller ranks and specifications. Use
     after ScavioAmazonSearch to get detailed product info.
+
+    Takes the ASIN as ``asin``. The wire field is called ``query``, and the
+    pre-3.4 ``query`` argument still works and fills ``asin`` when it is the
+    only one given.
 
     Setup:
         Install ``langchain-scavio`` and set the ``SCAVIO_API_KEY`` environment
@@ -243,7 +288,7 @@ class ScavioAmazonProduct(BaseTool):  # type: ignore[override]
     Invoke directly:
         .. code-block:: python
 
-            result = tool.invoke({"query": "B08N5WRWNW"})
+            result = tool.invoke({"asin": "B08N5WRWNW"})
     """
 
     name: str = "scavio_amazon_product"
@@ -255,7 +300,7 @@ class ScavioAmazonProduct(BaseTool):  # type: ignore[override]
         "scavio_amazon_offers for competing sellers. `reviews` is review "
         "metadata with no review text. "
         "Use ScavioAmazonSearch first to find the ASIN. "
-        "Input should be an Amazon ASIN code. "
+        "Pass it as asin; country selects the marketplace. "
         "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioAmazonProductInput
@@ -281,20 +326,23 @@ class ScavioAmazonProduct(BaseTool):  # type: ignore[override]
 
     def _run(
         self,
-        query: str,
+        asin: Optional[str] = None,
         country: Optional[str] = None,
+        domain: Optional[str] = None,
+        query: Optional[str] = None,
         *,
         run_manager: Optional[CallbackManagerForToolRun] = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Fetch Amazon product details synchronously."""
+        identifier = asin or query
         try:
             raw = self.api_wrapper.raw_results(
-                query=query,
+                query=identifier,
                 country=country,
-                **_legacy(kwargs),
+                domain=domain,
             )
-            return self._process_response(raw, query)
+            return self._process_response(raw, identifier or "")
         except ToolException:
             raise
         except Exception as e:
@@ -302,20 +350,23 @@ class ScavioAmazonProduct(BaseTool):  # type: ignore[override]
 
     async def _arun(
         self,
-        query: str,
+        asin: Optional[str] = None,
         country: Optional[str] = None,
+        domain: Optional[str] = None,
+        query: Optional[str] = None,
         *,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Fetch Amazon product details asynchronously."""
+        identifier = asin or query
         try:
             raw = await self.api_wrapper.raw_results_async(
-                query=query,
+                query=identifier,
                 country=country,
-                **_legacy(kwargs),
+                domain=domain,
             )
-            return self._process_response(raw, query)
+            return self._process_response(raw, identifier or "")
         except ToolException:
             raise
         except Exception as e:
@@ -332,19 +383,24 @@ class ScavioAmazonProduct(BaseTool):  # type: ignore[override]
         return raw
 
 
-class ScavioAmazonOffersInput(BaseModel):
+class ScavioAmazonOffersInput(_AsinAliasMixin):
     """Input schema for ScavioAmazonOffers tool."""
 
     model_config = ConfigDict(extra="allow")
 
-    query: str = Field(
-        description=(
-            "Amazon product ASIN code (e.g., 'B08N5WRWNW'). "
-            "Use ScavioAmazonSearch first to find ASINs if needed."
-        )
-    )
+    asin: str = Field(description=_ASIN_DESCRIPTION)
 
     country: Optional[str] = Field(default=None, description=_COUNTRY_DESCRIPTION)
+
+    domain: Optional[str] = Field(default=None, description=_DOMAIN_DESCRIPTION)
+
+    query: Optional[str] = Field(
+        default=None,
+        description=(
+            "Deprecated spelling of asin, kept for backwards compatibility. "
+            "Prefer asin; when both are given asin wins."
+        ),
+    )
 
 
 class ScavioAmazonOffers(BaseTool):  # type: ignore[override]
@@ -353,6 +409,10 @@ class ScavioAmazonOffers(BaseTool):  # type: ignore[override]
     Returns each seller's price, condition, shipping, and which offer holds the
     buy box. Use for price comparison, reseller research, and buy-box
     monitoring.
+
+    Takes the ASIN as ``asin``. The wire field is called ``query``, and the
+    pre-3.4 ``query`` argument still works and fills ``asin`` when it is the
+    only one given.
 
     Setup:
         Install ``langchain-scavio`` and set the ``SCAVIO_API_KEY`` environment
@@ -373,7 +433,7 @@ class ScavioAmazonOffers(BaseTool):  # type: ignore[override]
     Invoke directly:
         .. code-block:: python
 
-            result = tool.invoke({"query": "B08N5WRWNW"})
+            result = tool.invoke({"asin": "B08N5WRWNW"})
     """
 
     name: str = "scavio_amazon_offers"
@@ -384,7 +444,7 @@ class ScavioAmazonOffers(BaseTool):  # type: ignore[override]
         "`price` excludes shipping_price, and the buy-box winner is not always "
         "the cheapest offer. Page 1 only. An ASIN sold only by Amazon returns "
         "an empty offers list plus a `note` - that is a normal answer, not an "
-        "error. Input should be an Amazon ASIN code. "
+        "error. Pass the ASIN as asin; country selects the marketplace. "
         "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioAmazonOffersInput
@@ -410,20 +470,23 @@ class ScavioAmazonOffers(BaseTool):  # type: ignore[override]
 
     def _run(
         self,
-        query: str,
+        asin: Optional[str] = None,
         country: Optional[str] = None,
+        domain: Optional[str] = None,
+        query: Optional[str] = None,
         *,
         run_manager: Optional[CallbackManagerForToolRun] = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Fetch the offer listing synchronously."""
+        identifier = asin or query
         try:
             raw = self.api_wrapper.raw_results(
-                query=query,
+                query=identifier,
                 country=country,
-                **_legacy(kwargs),
+                domain=domain,
             )
-            return self._process_response(raw, query)
+            return self._process_response(raw, identifier or "")
         except ToolException:
             raise
         except Exception as e:
@@ -431,20 +494,23 @@ class ScavioAmazonOffers(BaseTool):  # type: ignore[override]
 
     async def _arun(
         self,
-        query: str,
+        asin: Optional[str] = None,
         country: Optional[str] = None,
+        domain: Optional[str] = None,
+        query: Optional[str] = None,
         *,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Fetch the offer listing asynchronously."""
+        identifier = asin or query
         try:
             raw = await self.api_wrapper.raw_results_async(
-                query=query,
+                query=identifier,
                 country=country,
-                **_legacy(kwargs),
+                domain=domain,
             )
-            return self._process_response(raw, query)
+            return self._process_response(raw, identifier or "")
         except ToolException:
             raise
         except Exception as e:

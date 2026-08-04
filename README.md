@@ -55,6 +55,18 @@ result = tool.invoke({"query": "best python web frameworks 2026"})
 Per platform: Google 12, YouTube 16, Instagram 12, Reddit 12, TikTok 11, X 11,
 LinkedIn 9, TikTok Shop 8, Amazon 3, Walmart 2.
 
+> **New in 3.4.** Parameter parity: every tool now exposes the full parameter
+> set of the endpoint behind it, in the agent-visible schema rather than as a
+> constructor attribute an agent cannot vary per call. `ScavioSearch` gained the
+> ten remaining Google v2 params (`location`, `uule`, `lr`, `cr`, `safe`,
+> `nfpr`, `filter`, `time_period`, `resolve_ai_overview`, `include_html`);
+> `ScavioYouTubeSearch` gained `type` plus the `four_k`/`hdr`/`video_360`/
+> `video_3d`/`vr180` feature flags; `ScavioGoogleAIMode` gained `include_html`;
+> `ScavioRedditPost` accepts `post_id` as well as `url`; the Amazon tools take
+> `asin` under its own name plus the deprecated `domain`/`start_page` aliases.
+> Nothing was removed -- every pre-3.4 spelling still works and still wins or
+> loses exactly as documented.
+
 > **New in 3.3.** Reddit goes from 2 tools to all 12 endpoints: search
 > suggestions, post comments, comment replies, subreddit metadata and feed,
 > user profile/posts/comments, the popular feed and trending queries. Every
@@ -107,7 +119,7 @@ LinkedIn 9, TikTok Shop 8, Amazon 3, Walmart 2.
 | `ScavioYouTubeStreams` | Fetch playable/downloadable stream URLs for a video |
 | `ScavioRedditSearch` | Search Reddit posts with cursor pagination |
 | `ScavioRedditSearchSuggestions` | Reddit search autocomplete for query expansion |
-| `ScavioRedditPost` | Fetch a Reddit post's metadata by URL (no comments) |
+| `ScavioRedditPost` | Fetch a Reddit post's metadata by URL or post_id (no comments) |
 | `ScavioRedditPostComments` | Top-level comments on a Reddit post, with sorting |
 | `ScavioRedditCommentReplies` | Replies to one comment (needs its `reply_cursor`) |
 | `ScavioRedditSubreddit` | Subreddit metadata: subscribers, description, icon |
@@ -334,15 +346,15 @@ search = ScavioAmazonSearch(max_results=5)
 search.invoke({"query": "wireless headphones", "country": "us", "page": 1})
 
 product = ScavioAmazonProduct()
-product.invoke({"query": "B08N5WRWNW"})           # query = ASIN
+product.invoke({"asin": "B08N5WRWNW"})            # `query` still accepted
 
 offers = ScavioAmazonOffers()
-offers.invoke({"query": "B08N5WRWNW"})            # every seller for that ASIN
+offers.invoke({"asin": "B08N5WRWNW"})             # every seller for that ASIN
 ```
 
 > **Targeting a marketplace:** `country` takes a two-letter code, not a domain. Supported: `us` (default), `gb` (the UK is `gb`, not `uk`), `ca`, `de`, `fr`, `es`, `it`, `jp`, `in`, `au`, `br`, `mx`, `nl`, `pl`, `se`, `sg`, `ae`, `sa`, `eg`, `cn`, `be`, `tr`. An unrecognised code falls back to `us`.
 
-> **Amazon changed in 3.0 (breaking).** The upstream provider moved and the request surface shrank. `sort_by`, `pages`, `category_id`, `merchant_id`, `language`, `currency`, `device`, `zip_code` and `autoselect_variant` are gone from all Amazon tools -- the marketplace ignores every one of them, so they are removed rather than kept as silent no-ops (`sort_by` was verified: all six sort values return the identical unordered set). `domain` and `start_page` still work on the wire and are still forwarded, but they are no longer in the tool schemas: use `country` and `page`. Response fields were renamed too -- `url_image` is now `image`, `best_seller`/`is_amazons_choice` collapsed into `badge`, and `buybox` is gone (use `ScavioAmazonOffers`).
+> **Amazon changed in 3.0 (breaking).** The upstream provider moved and the request surface shrank. `sort_by`, `pages`, `category_id`, `merchant_id`, `language`, `currency`, `device`, `zip_code` and `autoselect_variant` are gone from all Amazon tools -- the marketplace ignores every one of them, so they are removed rather than kept as silent no-ops (`sort_by` was verified: all six sort values return the identical unordered set). `domain` and `start_page` are deprecated wire aliases: they still work and, since 3.4, are declared on the schemas so nothing the endpoint accepts is unreachable -- but prefer `country` and `page`, which win when both are given. Response fields were renamed too -- `url_image` is now `image`, `best_seller`/`is_amazons_choice` collapsed into `badge`, and `buybox` is gone (use `ScavioAmazonOffers`).
 
 ### Walmart
 
@@ -377,8 +389,9 @@ result = search.invoke({
     "duration": "medium",                # short|medium|long
     "upload_date": "this_month",         # last_hour|today|this_week|this_month|this_year
     "sort_by": "view_count",             # relevance|date|view_count|rating
-    "video_type": "video",               # video|channel|playlist
+    "type": "video",                     # video|channel|playlist|movie
     "features": ["hd", "subtitles"],     # hd|4k|subtitles|creative_commons|live|360|3d|hdr|vr180
+    "four_k": True,                      # or hdr / video_360 / video_3d / vr180
 })
 
 # Paginate with the previous response's next_cursor
@@ -483,6 +496,7 @@ post = ScavioRedditPost()
 result = post.invoke({
     "url": "https://www.reddit.com/r/programming/comments/abc123/example_post/"
 })
+# or, equivalently: post.invoke({"post_id": "t3_abc123"})
 # result["data"] is a flat post object (post_id, title, text, score,
 # upvote_ratio, num_comments, media). It does NOT return comments.
 ```
@@ -812,10 +826,25 @@ price before it calls.
 |-----------|------|-------------|
 | `query` | `str` | Search query |
 | `search_type` | `classic\|news\|maps` | Type of search |
-| `country_code` | `str` | ISO 3166-1 alpha-2 |
-| `language` | `str` | ISO 639-1 |
+| `gl` | `str` | Country the search runs from, ISO 3166-1 alpha-2 |
+| `hl` | `str` | UI language, ISO 639-1 |
+| `start` | `int` | Result OFFSET, not a page: 0, 10, 20, ... up to 990 |
+| `google_domain` | `str` | Regional Google domain, e.g. `google.co.uk` |
 | `device` | `desktop\|mobile` | Device type |
-| `page` | `int` | Result page number |
+| `location` | `str` | Canonical location name, UULE-encoded server-side |
+| `uule` | `str` | Pre-encoded UULE string; wins over `location` |
+| `lr` | `str` | Language restrict on the pages, e.g. `lang_en` |
+| `cr` | `str` | Country restrict on the pages, e.g. `countryUS` |
+| `safe` | `active` | SafeSearch; `active` is the only accepted value |
+| `nfpr` | `bool` | Disable spelling correction |
+| `filter` | `"0"\|"1"` | Omitted-results filter, a STRING not a number |
+| `time_period` | `str` | last_hour\|last_day\|last_week\|last_month\|last_year |
+| `resolve_ai_overview` | `bool` | Resolve a deferred AI Overview (default true) |
+| `include_html` | `bool` | Inline raw Google HTML. Off by default and very large |
+| `country_code` / `language` / `page` | | Deprecated aliases of `gl` / `hl` / `start` |
+
+Everything from `location` down is classic-search only: on `news` and `maps`
+those filters are dropped rather than sent to an endpoint that cannot use them.
 
 ### ScavioAmazonSearch
 
@@ -824,6 +853,7 @@ price before it calls.
 | `query` | `str` | Product search query |
 | `country` | `str` | Two-letter marketplace code (us, gb, de, jp, ...). Defaults to us |
 | `page` | `int` | Result page, 1-based. One page per call, 1 credit each |
+| `domain` / `start_page` | | Deprecated aliases of `country` / `page` |
 
 There is no sort, category, merchant or price filter: the marketplace ignores
 them. Rank results yourself.
@@ -832,8 +862,10 @@ them. Rank results yourself.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `query` | `str` | The ASIN |
+| `asin` | `str` | The ASIN. Sent on the wire as `query` |
 | `country` | `str` | Two-letter marketplace code. Defaults to us |
+| `domain` | `str` | Deprecated alias of `country` |
+| `query` | `str` | Deprecated spelling of `asin`; `asin` wins when both are given |
 
 ### ScavioWalmartSearch
 
@@ -851,10 +883,11 @@ them. Rank results yourself.
 |-----------|------|-------------|
 | `query` | `str` | Search query |
 | `upload_date` | `str` | last_hour\|today\|this_week\|this_month\|this_year |
-| `video_type` | `str` | video\|channel\|playlist |
+| `type` | `str` | video\|channel\|playlist\|movie (`video_type` is the old alias) |
 | `duration` | `str` | short\|medium\|long |
 | `sort_by` | `str` | relevance\|date\|view_count\|rating |
-| `hd` / `subtitles` / `live` | `bool` | Content filters |
+| `hd` / `subtitles` / `creative_commons` / `live` | `bool` | Content filters |
+| `four_k` / `hdr` / `video_360` / `video_3d` / `vr180` | `bool` | Sent as `4k`, `hdr`, `360`, `3d`, `vr180` |
 | `features` | `list[str]` | hd\|4k\|subtitles\|creative_commons\|live\|360\|3d\|hdr\|vr180 |
 | `cursor` | `str` | Pagination cursor from a prior response's `next_cursor` |
 
@@ -919,6 +952,9 @@ parameter: the endpoint accepts only `query` and `cursor`.
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `url` | `str` | Full Reddit post URL (www., old., or new. subdomains accepted) |
+| `post_id` | `str` | Post fullname `t3_...` or the bare id, instead of `url` |
+
+Supply one of the two; supplying neither is a validation error.
 
 ### ScavioRedditPostComments
 

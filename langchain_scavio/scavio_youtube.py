@@ -33,8 +33,13 @@ from langchain_scavio._utilities import (
 
 logger = logging.getLogger(__name__)
 
+# The feature flags moved into the args_schema in 3.4 under their API names
+# (four_k, video_360, video_3d, hdr, vr180). The pre-3.4 constructor spellings
+# below still work as per-tool defaults but remain rejected at invocation, so a
+# model that guesses the old name gets told where the flag lives instead of
+# having it silently dropped.
 _SEARCH_INIT_ONLY_PARAMS = frozenset(
-    {"max_results", "fourk", "hdr", "three_sixty", "threed", "vr180"}
+    {"max_results", "fourk", "three_sixty", "threed"}
 )
 
 _LIST_INIT_ONLY_PARAMS = frozenset({"max_results"})
@@ -68,9 +73,19 @@ class ScavioYouTubeSearchInput(BaseModel):
         ),
     )
 
+    type: Optional[Literal["video", "channel", "playlist", "movie"]] = Field(
+        default=None,
+        description=(
+            "Filter by result type. Options: video, channel, playlist, movie."
+        ),
+    )
+
     video_type: Optional[Literal["video", "channel", "playlist"]] = Field(
         default=None,
-        description="Filter by content type. Options: video, channel, playlist.",
+        description=(
+            "Deprecated alias of type, kept for backwards compatibility. "
+            "Prefer type; when both are given type wins."
+        ),
     )
 
     duration: Optional[Literal["short", "medium", "long"]] = Field(
@@ -109,6 +124,33 @@ class ScavioYouTubeSearchInput(BaseModel):
     live: Optional[bool] = Field(
         default=None,
         description="Filter for live streams only.",
+    )
+
+    four_k: Optional[bool] = Field(
+        default=None,
+        description="Filter for 4K videos only. Sent on the wire as '4k'.",
+    )
+
+    hdr: Optional[bool] = Field(
+        default=None,
+        description="Filter for HDR videos only.",
+    )
+
+    video_360: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Filter for 360-degree videos only. Sent on the wire as '360'."
+        ),
+    )
+
+    video_3d: Optional[bool] = Field(
+        default=None,
+        description="Filter for 3D videos only. Sent on the wire as '3d'.",
+    )
+
+    vr180: Optional[bool] = Field(
+        default=None,
+        description="Filter for VR180 videos only.",
     )
 
     location: Optional[bool] = Field(
@@ -152,7 +194,9 @@ class ScavioYouTubeSearch(BaseTool):  # type: ignore[override]
     """Search YouTube videos using the Scavio API.
 
     Returns video titles, channels, view counts, durations, and thumbnails.
-    Supports filtering by upload date, duration, content type, and more.
+    Supports filtering by upload date, duration, result type, sort order and
+    the per-feature flags (hd, four_k, hdr, subtitles, creative_commons, live,
+    video_360, video_3d, vr180), all settable per call.
 
     Setup:
         Install ``langchain-scavio`` and set the ``SCAVIO_API_KEY`` environment
@@ -180,14 +224,19 @@ class ScavioYouTubeSearch(BaseTool):  # type: ignore[override]
     description: str = (
         "Search YouTube videos using the Scavio API. "
         "Returns video titles, channels, view counts, durations, and video IDs. "
-        "Supports filtering by upload date, duration, content type, and sort order. "
+        "Supports filtering by upload date, duration, result type (video, channel, "
+        "playlist, movie), sort order and feature flags such as hd, four_k, hdr, "
+        "subtitles, creative_commons, live, video_360, video_3d and vr180. "
+        "Page with cursor, taken from the previous response's next_cursor. "
         "Input should be a search query. "
         "Costs 2 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioYouTubeSearchInput
     handle_tool_error: bool = True
 
-    # Instantiation-only parameters (not controllable by the LLM).
+    # max_results is instantiation-only. The feature flags below are the
+    # pre-3.4 constructor spellings of four_k/hdr/video_360/video_3d/vr180:
+    # they now act as defaults for the matching args_schema fields.
     max_results: Optional[int] = 5
     fourk: Optional[bool] = None
     hdr: Optional[bool] = None
@@ -213,10 +262,59 @@ class ScavioYouTubeSearch(BaseTool):  # type: ignore[override]
             kwargs["api_wrapper"] = ScavioYouTubeSearchAPIWrapper(**api_wrapper_kwargs)
         super().__init__(**kwargs)
 
+    def _build_params(
+        self,
+        query: str,
+        upload_date: Optional[str],
+        type: Optional[str],
+        video_type: Optional[str],
+        duration: Optional[str],
+        sort_by: Optional[str],
+        hd: Optional[bool],
+        subtitles: Optional[bool],
+        creative_commons: Optional[bool],
+        live: Optional[bool],
+        four_k: Optional[bool],
+        hdr: Optional[bool],
+        video_360: Optional[bool],
+        video_3d: Optional[bool],
+        vr180: Optional[bool],
+        location: Optional[bool],
+        features: Optional[list[str]],
+        cursor: Optional[str],
+    ) -> dict[str, Any]:
+        """Map tool arguments onto the wire body.
+
+        The wire spells the feature flags ``4k``/``360``/``3d``, which are not
+        valid Python identifiers, and the result filter ``type``. Per-call
+        values win; the constructor attributes are the fallback so a tool
+        pinned to, say, 4K at instantiation keeps that default.
+        """
+        return {
+            "search": query,
+            "upload_date": upload_date,
+            "type": type or video_type,
+            "duration": duration,
+            "sort_by": sort_by,
+            "hd": hd,
+            "subtitles": subtitles,
+            "creative_commons": creative_commons,
+            "live": live,
+            "location": location,
+            "features": features,
+            "cursor": cursor,
+            "4k": self.fourk if four_k is None else four_k,
+            "hdr": self.hdr if hdr is None else hdr,
+            "360": self.three_sixty if video_360 is None else video_360,
+            "3d": self.threed if video_3d is None else video_3d,
+            "vr180": self.vr180 if vr180 is None else vr180,
+        }
+
     def _run(
         self,
         query: str,
         upload_date: Optional[str] = None,
+        type: Optional[str] = None,
         video_type: Optional[str] = None,
         duration: Optional[str] = None,
         sort_by: Optional[str] = None,
@@ -224,6 +322,11 @@ class ScavioYouTubeSearch(BaseTool):  # type: ignore[override]
         subtitles: Optional[bool] = None,
         creative_commons: Optional[bool] = None,
         live: Optional[bool] = None,
+        four_k: Optional[bool] = None,
+        hdr: Optional[bool] = None,
+        video_360: Optional[bool] = None,
+        video_3d: Optional[bool] = None,
+        vr180: Optional[bool] = None,
         location: Optional[bool] = None,
         features: Optional[list[str]] = None,
         cursor: Optional[str] = None,
@@ -239,25 +342,11 @@ class ScavioYouTubeSearch(BaseTool):  # type: ignore[override]
                 "not during invocation."
             )
         try:
-            params: dict[str, Any] = {
-                "search": query,
-                "upload_date": upload_date,
-                "type": video_type,
-                "duration": duration,
-                "sort_by": sort_by,
-                "hd": hd,
-                "subtitles": subtitles,
-                "creative_commons": creative_commons,
-                "live": live,
-                "location": location,
-                "features": features,
-                "cursor": cursor,
-                "4k": self.fourk,
-                "hdr": self.hdr,
-                "360": self.three_sixty,
-                "3d": self.threed,
-                "vr180": self.vr180,
-            }
+            params = self._build_params(
+                query, upload_date, type, video_type, duration, sort_by, hd,
+                subtitles, creative_commons, live, four_k, hdr, video_360,
+                video_3d, vr180, location, features, cursor,
+            )
             raw = self.api_wrapper.raw_results(**params)
             return self._process_response(raw, query)
         except ToolException:
@@ -269,6 +358,7 @@ class ScavioYouTubeSearch(BaseTool):  # type: ignore[override]
         self,
         query: str,
         upload_date: Optional[str] = None,
+        type: Optional[str] = None,
         video_type: Optional[str] = None,
         duration: Optional[str] = None,
         sort_by: Optional[str] = None,
@@ -276,6 +366,11 @@ class ScavioYouTubeSearch(BaseTool):  # type: ignore[override]
         subtitles: Optional[bool] = None,
         creative_commons: Optional[bool] = None,
         live: Optional[bool] = None,
+        four_k: Optional[bool] = None,
+        hdr: Optional[bool] = None,
+        video_360: Optional[bool] = None,
+        video_3d: Optional[bool] = None,
+        vr180: Optional[bool] = None,
         location: Optional[bool] = None,
         features: Optional[list[str]] = None,
         cursor: Optional[str] = None,
@@ -291,25 +386,11 @@ class ScavioYouTubeSearch(BaseTool):  # type: ignore[override]
                 "not during invocation."
             )
         try:
-            params: dict[str, Any] = {
-                "search": query,
-                "upload_date": upload_date,
-                "type": video_type,
-                "duration": duration,
-                "sort_by": sort_by,
-                "hd": hd,
-                "subtitles": subtitles,
-                "creative_commons": creative_commons,
-                "live": live,
-                "location": location,
-                "features": features,
-                "cursor": cursor,
-                "4k": self.fourk,
-                "hdr": self.hdr,
-                "360": self.three_sixty,
-                "3d": self.threed,
-                "vr180": self.vr180,
-            }
+            params = self._build_params(
+                query, upload_date, type, video_type, duration, sort_by, hd,
+                subtitles, creative_commons, live, four_k, hdr, video_360,
+                video_3d, vr180, location, features, cursor,
+            )
             raw = await self.api_wrapper.raw_results_async(**params)
             return self._process_response(raw, query)
         except ToolException:

@@ -177,6 +177,73 @@ class TestYouTubeSearchRun:
         assert "video_type" not in body
 
     @responses.activate
+    def test_type_wins_over_the_video_type_alias(
+        self, youtube_search_tool: ScavioYouTubeSearch
+    ) -> None:
+        import json as json_mod
+
+        responses.add(
+            responses.POST,
+            SEARCH_ENDPOINT,
+            json=make_youtube_search_response(),
+            status=200,
+        )
+        youtube_search_tool.invoke(
+            {"query": "trailers", "type": "movie", "video_type": "playlist"}
+        )
+        body = json_mod.loads(responses.calls[0].request.body)
+        assert body["type"] == "movie"
+
+    @responses.activate
+    def test_feature_flags_sent_under_their_wire_names(
+        self, youtube_search_tool: ScavioYouTubeSearch
+    ) -> None:
+        """four_k/video_360/video_3d are 4k/360/3d on the wire."""
+        import json as json_mod
+
+        responses.add(
+            responses.POST,
+            SEARCH_ENDPOINT,
+            json=make_youtube_search_response(),
+            status=200,
+        )
+        youtube_search_tool.invoke(
+            {
+                "query": "drone footage",
+                "four_k": True,
+                "hdr": True,
+                "video_360": True,
+                "video_3d": False,
+                "vr180": True,
+            }
+        )
+        body = json_mod.loads(responses.calls[0].request.body)
+        assert body["4k"] is True
+        assert body["hdr"] is True
+        assert body["360"] is True
+        assert body["3d"] is False
+        assert body["vr180"] is True
+        for python_name in ("four_k", "video_360", "video_3d"):
+            assert python_name not in body
+
+    @responses.activate
+    def test_per_call_flag_overrides_the_constructor_default(self) -> None:
+        import json as json_mod
+
+        tool = ScavioYouTubeSearch(scavio_api_key=MOCK_API_KEY, fourk=True, hdr=True)
+        responses.add(
+            responses.POST,
+            SEARCH_ENDPOINT,
+            json=make_youtube_search_response(),
+            status=200,
+        )
+        tool.invoke({"query": "drone footage", "four_k": False})
+        body = json_mod.loads(responses.calls[0].request.body)
+        assert body["4k"] is False
+        # The untouched constructor default still applies.
+        assert body["hdr"] is True
+
+    @responses.activate
     def test_features_forwarded(
         self, youtube_search_tool: ScavioYouTubeSearch
     ) -> None:
@@ -276,9 +343,23 @@ class TestYouTubeSearchInputSchema:
         assert "upload_date" in props
         assert "duration" in props
         assert "sort_by" in props
+        assert "type" in props
         assert "video_type" in props
         assert "features" in props
         assert "cursor" in props
+
+    def test_feature_flags_are_agent_visible(self) -> None:
+        """They were constructor-only before 3.4, so no agent could set them."""
+        tool = ScavioYouTubeSearch(scavio_api_key=MOCK_API_KEY)
+        props = tool.get_input_schema().model_json_schema()["properties"]
+        for flag in ("four_k", "hdr", "video_360", "video_3d", "vr180"):
+            assert flag in props
+
+    def test_type_enum_matches_the_wire_values(self) -> None:
+        tool = ScavioYouTubeSearch(scavio_api_key=MOCK_API_KEY)
+        prop = tool.get_input_schema().model_json_schema()["properties"]["type"]
+        values = next(o["enum"] for o in prop["anyOf"] if "enum" in o)
+        assert values == ["video", "channel", "playlist", "movie"]
 
     def test_query_is_required(self) -> None:
         tool = ScavioYouTubeSearch(scavio_api_key=MOCK_API_KEY)

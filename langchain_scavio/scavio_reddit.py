@@ -10,7 +10,7 @@ from langchain_core.callbacks import (
     CallbackManagerForToolRun,
 )
 from langchain_core.tools import BaseTool, ToolException
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from langchain_scavio._utilities import (
     ScavioRedditCommentRepliesAPIWrapper,
@@ -204,12 +204,29 @@ class ScavioRedditPostInput(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    url: str = Field(
+    url: Optional[str] = Field(
+        default=None,
         description=(
             "Full Reddit post URL (www., old., or new. subdomains accepted). "
-            "Use ScavioRedditSearch first to find post URLs if needed."
-        )
+            "Use ScavioRedditSearch first to find post URLs if needed. "
+            "Provide url or post_id."
+        ),
     )
+
+    post_id: Optional[str] = Field(
+        default=None,
+        description=(
+            "Post fullname ('t3_1v6ngaf') or the bare base-36 id ('1v6ngaf'), "
+            "as an alternative to url. Reddit search results and this tool's "
+            "own data.post_id both return it in the fullname form."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _require_identifier(self) -> "ScavioRedditPostInput":
+        if not (self.post_id or self.url):
+            raise ValueError("post_id or url is required")
+        return self
 
 
 class ScavioRedditPost(BaseTool):  # type: ignore[override]
@@ -219,6 +236,9 @@ class ScavioRedditPost(BaseTool):  # type: ignore[override]
     url, subreddit, author, score, upvote_ratio, num_comments, created_at,
     is_nsfw, is_video, thumbnail, media. Pairs with ScavioRedditSearch --
     feed any post URL from search results directly into this tool.
+
+    Takes ``url`` or ``post_id``; supplying neither is a validation error.
+    ``post_id`` accepts the ``t3_...`` fullname or the bare base-36 id.
 
     This endpoint does NOT return comments. Use the post_id it returns with
     the Scavio /reddit/post/comments endpoint to fetch the comment thread.
@@ -251,11 +271,12 @@ class ScavioRedditPost(BaseTool):  # type: ignore[override]
 
     name: str = "scavio_reddit_post"
     description: str = (
-        "Fetch a single Reddit post's metadata by URL. "
+        "Fetch a single Reddit post's metadata by URL or post_id. "
         "Returns a flat post object (title, text, score, upvote_ratio, "
         "num_comments, media) under data. Does not return comments. "
         "Use ScavioRedditSearch to find post URLs. Costs 1 credit per call. "
-        "Input should be a full Reddit post URL."
+        "Input should be a full Reddit post URL, or a post_id such as "
+        "'t3_1v6ngaf'."
     )
     args_schema: Type[BaseModel] = ScavioRedditPostInput
     handle_tool_error: bool = True
@@ -280,15 +301,16 @@ class ScavioRedditPost(BaseTool):  # type: ignore[override]
 
     def _run(
         self,
-        url: str,
+        url: Optional[str] = None,
+        post_id: Optional[str] = None,
         *,
         run_manager: Optional[CallbackManagerForToolRun] = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Fetch Reddit post details synchronously."""
         try:
-            raw = self.api_wrapper.raw_results(url=url)
-            return self._process_response(raw, url)
+            raw = self.api_wrapper.raw_results(url=url, post_id=post_id)
+            return self._process_response(raw, url or post_id or "")
         except ToolException:
             raise
         except Exception as e:
@@ -296,21 +318,22 @@ class ScavioRedditPost(BaseTool):  # type: ignore[override]
 
     async def _arun(
         self,
-        url: str,
+        url: Optional[str] = None,
+        post_id: Optional[str] = None,
         *,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Fetch Reddit post details asynchronously."""
         try:
-            raw = await self.api_wrapper.raw_results_async(url=url)
-            return self._process_response(raw, url)
+            raw = await self.api_wrapper.raw_results_async(url=url, post_id=post_id)
+            return self._process_response(raw, url or post_id or "")
         except ToolException:
             raise
         except Exception as e:
             return {"error": str(e)}
 
-    def _process_response(self, raw: dict[str, Any], url: str) -> dict[str, Any]:
+    def _process_response(self, raw: dict[str, Any], subject: str) -> dict[str, Any]:
         """Raise ToolException if no post data returned.
 
         /api/v1/reddit/post returns the post as a flat object under `data`
@@ -319,8 +342,8 @@ class ScavioRedditPost(BaseTool):  # type: ignore[override]
         data = raw.get("data") or {}
         if not (isinstance(data, dict) and data.get("post_id")):
             raise ToolException(
-                f"No Reddit post found at '{url}'. "
-                "Verify the URL points to a valid Reddit post."
+                f"No Reddit post found for '{subject}'. "
+                "Verify the URL or post_id points to a valid Reddit post."
             )
         return raw
 
