@@ -115,7 +115,8 @@ class ScavioAmazonSearch(BaseTool):  # type: ignore[override]
         "and delivery. Results are NOT sorted and cannot be sorted or filtered "
         "by category, merchant or price - rank them yourself. "
         "reviews_count is Amazon's rounded display value and is approximate "
-        "above 1000. Input should be a product search query."
+        "above 1000. Input should be a product search query. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioAmazonSearchInput
     handle_tool_error: bool = True
@@ -254,7 +255,8 @@ class ScavioAmazonProduct(BaseTool):  # type: ignore[override]
         "scavio_amazon_offers for competing sellers. `reviews` is review "
         "metadata with no review text. "
         "Use ScavioAmazonSearch first to find the ASIN. "
-        "Input should be an Amazon ASIN code."
+        "Input should be an Amazon ASIN code. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioAmazonProductInput
     handle_tool_error: bool = True
@@ -382,7 +384,8 @@ class ScavioAmazonOffers(BaseTool):  # type: ignore[override]
         "`price` excludes shipping_price, and the buy-box winner is not always "
         "the cheapest offer. Page 1 only. An ASIN sold only by Amazon returns "
         "an empty offers list plus a `note` - that is a normal answer, not an "
-        "error. Input should be an Amazon ASIN code."
+        "error. Input should be an Amazon ASIN code. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioAmazonOffersInput
     handle_tool_error: bool = True

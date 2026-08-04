@@ -97,7 +97,8 @@ class ScavioInstagramProfile(BaseTool):  # type: ignore[override]
     description: str = (
         "Look up an Instagram user profile by username or user_id. "
         "Returns follower/following counts, bio, avatar, and user_id. "
-        "Provide either username (without @) or user_id."
+        "Provide either username (without @) or user_id. "
+        "Costs 10 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioInstagramProfileInput
     handle_tool_error: bool = True
@@ -228,7 +229,8 @@ class ScavioInstagramUserPosts(BaseTool):  # type: ignore[override]
         "Fetch an Instagram user's posts. "
         "Returns posts with like/comment counts, media type, and captions. "
         "Provide either username (without @) or user_id. "
-        "Supports pagination via cursor."
+        "Supports pagination via cursor. "
+        "Costs 2 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioInstagramUserPostsInput
     handle_tool_error: bool = True
@@ -383,7 +385,8 @@ class ScavioInstagramUserReels(BaseTool):  # type: ignore[override]
         "Fetch an Instagram user's reels. "
         "Returns reels with play/like/comment counts and captions. "
         "Provide either username (without @) or user_id. "
-        "Supports pagination via cursor."
+        "Supports pagination via cursor. "
+        "Costs 10 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioInstagramUserReelsInput
     handle_tool_error: bool = True
@@ -538,7 +541,8 @@ class ScavioInstagramTaggedPosts(BaseTool):  # type: ignore[override]
         "Fetch posts an Instagram user is tagged in. "
         "Returns tagged posts with like/comment counts and captions. "
         "Provide either username (without @) or user_id. "
-        "Supports pagination via cursor."
+        "Supports pagination via cursor. "
+        "Costs 10 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioInstagramTaggedPostsInput
     handle_tool_error: bool = True
@@ -680,7 +684,8 @@ class ScavioInstagramStories(BaseTool):  # type: ignore[override]
     description: str = (
         "Fetch an Instagram user's active stories. "
         "Returns active stories with media URLs and timestamps. "
-        "Provide either username (without @) or user_id."
+        "Provide either username (without @) or user_id. "
+        "Costs 10 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioInstagramStoriesInput
     handle_tool_error: bool = True
@@ -798,7 +803,8 @@ class ScavioInstagramPost(BaseTool):  # type: ignore[override]
         "Fetch details for a single Instagram post or reel. "
         "Returns caption, statistics (likes, comments), media type, "
         "media URLs, and author info. "
-        "Provide one of url, media_id, or shortcode."
+        "Provide one of url, media_id, or shortcode. "
+        "Costs 8 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioInstagramPostInput
     handle_tool_error: bool = True
@@ -930,7 +936,8 @@ class ScavioInstagramPostComments(BaseTool):  # type: ignore[override]
         "Fetch comments on an Instagram post. "
         "Returns comment text, likes, reply counts, and commenter info. "
         "Provide either shortcode or url. "
-        "Supports pagination and sort by popular or newest."
+        "Supports pagination and sort by popular or newest. "
+        "Costs 10 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioInstagramPostCommentsInput
     handle_tool_error: bool = True
@@ -1078,7 +1085,8 @@ class ScavioInstagramCommentReplies(BaseTool):  # type: ignore[override]
         "Fetch replies to a specific comment on an Instagram post. "
         "Requires both media_id and comment_id "
         "(from the post comments endpoint). "
-        "Supports pagination."
+        "Supports pagination. "
+        "Costs 8 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioInstagramCommentRepliesInput
     handle_tool_error: bool = True
@@ -1216,7 +1224,8 @@ class ScavioInstagramSearchUsers(BaseTool):  # type: ignore[override]
     description: str = (
         "Search Instagram users by keyword. "
         "Returns user profiles with follower counts, bios, and user_id. "
-        "Supports pagination. Input should be a search query."
+        "Supports pagination. Input should be a search query. "
+        "Costs 10 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioInstagramSearchUsersInput
     handle_tool_error: bool = True
@@ -1344,7 +1353,8 @@ class ScavioInstagramSearchHashtags(BaseTool):  # type: ignore[override]
     description: str = (
         "Search Instagram hashtags by keyword. "
         "Returns hashtags with their names and media counts. "
-        "Supports pagination. Input should be a search query."
+        "Supports pagination. Input should be a search query. "
+        "Costs 10 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioInstagramSearchHashtagsInput
     handle_tool_error: bool = True
@@ -1488,7 +1498,8 @@ class ScavioInstagramUserFollowers(BaseTool):  # type: ignore[override]
         "Fetch an Instagram user's followers. "
         "Returns follower profiles with usernames, follower counts, and bios. "
         "Provide either username (without @) or user_id. "
-        "Supports pagination via cursor."
+        "Supports pagination via cursor. "
+        "Costs 10 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioInstagramUserFollowersInput
     handle_tool_error: bool = True
@@ -1644,7 +1655,8 @@ class ScavioInstagramUserFollowings(BaseTool):  # type: ignore[override]
         "Fetch accounts an Instagram user is following. "
         "Returns followed profiles with usernames, follower counts, and bios. "
         "Provide either username (without @) or user_id. "
-        "Supports pagination via cursor."
+        "Supports pagination via cursor. "
+        "Costs 10 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioInstagramUserFollowingsInput
     handle_tool_error: bool = True

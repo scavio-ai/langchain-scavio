@@ -96,7 +96,8 @@ class ScavioTikTokProfile(BaseTool):  # type: ignore[override]
     description: str = (
         "Look up a TikTok user profile by username or sec_user_id. "
         "Returns follower/following counts, bio, avatar, and sec_uid. "
-        "Provide either username (without @) or sec_user_id."
+        "Provide either username (without @) or sec_user_id. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokProfileInput
     handle_tool_error: bool = True
@@ -223,7 +224,8 @@ class ScavioTikTokUserPosts(BaseTool):  # type: ignore[override]
         "Fetch a TikTok user's posted videos. "
         "Returns videos with play/like/comment/share counts. "
         "Requires sec_user_id from a profile lookup. "
-        "Supports pagination and sort by latest or popular."
+        "Supports pagination and sort by latest or popular. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokUserPostsInput
     handle_tool_error: bool = True
@@ -354,7 +356,8 @@ class ScavioTikTokVideo(BaseTool):  # type: ignore[override]
         "Fetch details for a single TikTok video. "
         "Returns description, statistics (plays, likes, comments, shares), "
         "hashtags, music, cover image, and playback URLs. "
-        "Input should be a TikTok video ID."
+        "Input should be a TikTok video ID. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokVideoInput
     handle_tool_error: bool = True
@@ -465,7 +468,8 @@ class ScavioTikTokVideoComments(BaseTool):  # type: ignore[override]
     description: str = (
         "Fetch comments on a TikTok video. "
         "Returns comment text, likes, reply counts, and commenter info. "
-        "Supports pagination. Input should be a TikTok video ID."
+        "Supports pagination. Input should be a TikTok video ID. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokVideoCommentsInput
     handle_tool_error: bool = True
@@ -608,7 +612,8 @@ class ScavioTikTokCommentReplies(BaseTool):  # type: ignore[override]
     description: str = (
         "Fetch replies to a specific comment on a TikTok video. "
         "Requires both video_id and comment_id (from the video comments endpoint). "
-        "Supports pagination."
+        "Supports pagination. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokCommentRepliesInput
     handle_tool_error: bool = True
@@ -767,7 +772,8 @@ class ScavioTikTokSearchVideos(BaseTool):  # type: ignore[override]
         "Search TikTok videos by keyword. "
         "Returns videos with statistics, author info, and music metadata. "
         "Supports sort by relevance or most likes, and time range filters. "
-        "Input should be a search query."
+        "Input should be a search query. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokSearchVideosInput
     handle_tool_error: bool = True
@@ -919,7 +925,8 @@ class ScavioTikTokSearchUsers(BaseTool):  # type: ignore[override]
     description: str = (
         "Search TikTok users by keyword. "
         "Returns user profiles with follower counts, bios, and sec_uid. "
-        "Supports pagination. Input should be a search query."
+        "Supports pagination. Input should be a search query. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokSearchUsersInput
     handle_tool_error: bool = True
@@ -1050,7 +1057,8 @@ class ScavioTikTokHashtag(BaseTool):  # type: ignore[override]
     description: str = (
         "Look up TikTok hashtag information. "
         "Returns hashtag title, description, video count, and view count. "
-        "Provide either hashtag_name (without #) or hashtag_id."
+        "Provide either hashtag_name (without #) or hashtag_id. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokHashtagInput
     handle_tool_error: bool = True
@@ -1171,7 +1179,8 @@ class ScavioTikTokHashtagVideos(BaseTool):  # type: ignore[override]
         "Fetch TikTok videos for a specific hashtag. "
         "Returns videos with statistics and author info. "
         "Requires hashtag_id from the hashtag info endpoint. "
-        "Supports pagination."
+        "Supports pagination. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokHashtagVideosInput
     handle_tool_error: bool = True
@@ -1316,7 +1325,8 @@ class ScavioTikTokUserFollowers(BaseTool):  # type: ignore[override]
         "Fetch a TikTok user's followers. "
         "Returns follower profiles with usernames, follower counts, and bios. "
         "Requires sec_user_id from a profile lookup. "
-        "Supports pagination via page_token and min_time."
+        "Supports pagination via page_token and min_time. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokUserFollowersInput
     handle_tool_error: bool = True
@@ -1467,7 +1477,8 @@ class ScavioTikTokUserFollowings(BaseTool):  # type: ignore[override]
         "Fetch accounts a TikTok user is following. "
         "Returns followed profiles with usernames, follower counts, and bios. "
         "Requires sec_user_id from a profile lookup. "
-        "Supports pagination via page_token and min_time."
+        "Supports pagination via page_token and min_time. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioTikTokUserFollowingsInput
     handle_tool_error: bool = True

@@ -125,7 +125,8 @@ class ScavioWalmartSearch(BaseTool):  # type: ignore[override]
         "Search Walmart product listings using the Scavio API. "
         "Returns product names, prices, ratings, and fulfillment options. "
         "Supports price range filters and delivery speed filters. "
-        "Input should be a product search query."
+        "Input should be a product search query. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioWalmartSearchInput
     handle_tool_error: bool = True
@@ -319,7 +320,8 @@ class ScavioWalmartProduct(BaseTool):  # type: ignore[override]
         "Fetch full details for a specific Walmart product by product ID. "
         "Returns name, description, price, rating, reviews, and availability. "
         "Use ScavioWalmartSearch first to find product IDs. "
-        "Input should be a Walmart product ID."
+        "Input should be a Walmart product ID. "
+        "Costs 1 credit per call."
     )
     args_schema: Type[BaseModel] = ScavioWalmartProductInput
     handle_tool_error: bool = True
