@@ -304,3 +304,38 @@ def test_max_results_is_instantiation_only(case: tuple[Any, ...]) -> None:
         pytest.skip("detail tools do not truncate results")
     with pytest.raises(ValueError, match="instantiation"):
         _mk(cls)._run(**payload, max_results=3)
+
+
+class TestGoogleAIModeIncludeHtml:
+    """include_html is exposed but must stay opt-in, never a silent default."""
+
+    def test_include_html_is_on_the_schema(self) -> None:
+        schema = _mk(ScavioGoogleAIMode).get_input_schema().model_json_schema()
+        assert "include_html" in schema["properties"]
+        assert schema["properties"]["include_html"]["default"] is None
+
+    @responses.activate
+    def test_include_html_not_sent_unless_asked(self) -> None:
+        responses.add(
+            responses.POST,
+            f"{SCAVIO_API_URL}/api/v2/google/ai-mode",
+            json=_wrap({"text_blocks": [{"snippet": "a"}]}),
+            status=200,
+        )
+        _mk(ScavioGoogleAIMode).invoke({"query": "cache llm responses"})
+        assert "include_html" not in json_mod.loads(responses.calls[0].request.body)
+
+    @responses.activate
+    def test_include_html_forwarded_when_requested(self) -> None:
+        responses.add(
+            responses.POST,
+            f"{SCAVIO_API_URL}/api/v2/google/ai-mode",
+            json=_wrap({"text_blocks": [{"snippet": "a"}], "html": "<html>"}),
+            status=200,
+        )
+        result = _mk(ScavioGoogleAIMode).invoke(
+            {"query": "cache llm responses", "include_html": True}
+        )
+        body = json_mod.loads(responses.calls[0].request.body)
+        assert body["include_html"] is True
+        assert result["html"] == "<html>"

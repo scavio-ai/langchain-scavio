@@ -6,9 +6,14 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 import responses
+from pydantic import ValidationError
 
 from langchain_scavio._utilities import SCAVIO_API_URL
-from langchain_scavio.scavio_reddit import ScavioRedditPost, ScavioRedditSearch
+from langchain_scavio.scavio_reddit import (
+    ScavioRedditPost,
+    ScavioRedditPostInput,
+    ScavioRedditSearch,
+)
 
 from .conftest import (
     MOCK_API_KEY,
@@ -337,8 +342,30 @@ class TestRedditPostInputSchema:
         tool = ScavioRedditPost(scavio_api_key=MOCK_API_KEY)
         input_schema = tool.get_input_schema().model_json_schema()
         assert "url" in input_schema["properties"]
+        assert "post_id" in input_schema["properties"]
 
-    def test_url_is_required(self) -> None:
+    def test_neither_field_is_required_alone(self) -> None:
+        """The endpoint takes post_id OR url, so neither is required by itself."""
         tool = ScavioRedditPost(scavio_api_key=MOCK_API_KEY)
         input_schema = tool.get_input_schema().model_json_schema()
-        assert "url" in input_schema.get("required", [])
+        assert input_schema.get("required", []) == []
+
+    def test_one_identifier_is_mandatory(self) -> None:
+        with pytest.raises(ValidationError, match="post_id or url is required"):
+            ScavioRedditPostInput.model_validate({})
+
+    @responses.activate
+    def test_post_id_forwarded(self) -> None:
+        import json as json_mod
+
+        tool = ScavioRedditPost(scavio_api_key=MOCK_API_KEY)
+        responses.add(
+            responses.POST,
+            POST_ENDPOINT,
+            json=make_reddit_post_response(),
+            status=200,
+        )
+        tool.invoke({"post_id": "t3_1v6ngaf"})
+        body = json_mod.loads(responses.calls[0].request.body)
+        assert body["post_id"] == "t3_1v6ngaf"
+        assert "url" not in body

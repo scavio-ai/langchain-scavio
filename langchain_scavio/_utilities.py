@@ -212,6 +212,25 @@ _V2_GOOGLE_PATHS = {
 }
 
 
+# Params only /api/v2/google (classic) accepts. The news and maps endpoints
+# have narrower schemas -- maps takes start/ll/hl/gl/google_domain, news takes
+# its drivers plus hl/gl/google_domain/so -- so these are dropped rather than
+# forwarded into a request that cannot use them.
+_CLASSIC_ONLY_PARAMS = (
+    "device",
+    "nfpr",
+    "include_html",
+    "location",
+    "uule",
+    "lr",
+    "cr",
+    "safe",
+    "filter",
+    "time_period",
+    "resolve_ai_overview",
+)
+
+
 def _domain_from_url(url: Optional[str]) -> Optional[str]:
     """Extract the hostname from a URL, mirroring the v1 ``domain`` field."""
     if not url:
@@ -255,14 +274,11 @@ def _translate_google_params(
     if search_type == "classic":
         if page > 1:
             body["start"] = (page - 1) * 10
-        for key in ("device", "nfpr"):
-            if key in p:
-                body[key] = p.pop(key)
     else:
-        # News and Maps endpoints take neither device nor nfpr, and news has
+        # News and Maps take none of the classic SERP filters, and news has
         # no result offset at all (maps does, in multiples of 20).
-        p.pop("device", None)
-        p.pop("nfpr", None)
+        for key in _CLASSIC_ONLY_PARAMS:
+            p.pop(key, None)
         if search_type == "news":
             p.pop("start", None)
     body.update(p)

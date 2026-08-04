@@ -21,6 +21,43 @@ from .conftest import (
 API_ENDPOINT = f"{SCAVIO_API_URL}/api/v2/google"
 NEWS_ENDPOINT = f"{SCAVIO_API_URL}/api/v2/google/news"
 
+# Every request parameter POST /api/v2/google accepts, under its wire name.
+# The tool must expose all of them per call; anything missing here is an
+# endpoint feature an agent cannot reach.
+V2_WIRE_PARAMS = (
+    "query",
+    "device",
+    "start",
+    "include_html",
+    "hl",
+    "gl",
+    "google_domain",
+    "location",
+    "uule",
+    "lr",
+    "cr",
+    "safe",
+    "nfpr",
+    "filter",
+    "time_period",
+    "resolve_ai_overview",
+)
+
+
+def _enum_values(schema: dict, field: str) -> list:
+    """Pull the enum members out of an Optional[Literal[...]] JSON schema.
+
+    A single-member Literal serializes as ``const``, not ``enum``.
+    """
+    for option in [schema["properties"][field]] + schema["properties"][field].get(
+        "anyOf", []
+    ):
+        if "enum" in option:
+            return option["enum"]
+        if "const" in option:
+            return [option["const"]]
+    return []
+
 
 class TestInstantiation:
     def test_default_params(self, tool: ScavioSearch) -> None:
@@ -198,6 +235,125 @@ class TestRun:
         assert body["gl"] == "fr"
         assert "country_code" not in body
 
+    @responses.activate
+    def test_serp_filters_forwarded_verbatim(self, tool: ScavioSearch) -> None:
+        import json as json_mod
+
+        responses.add(
+            responses.POST,
+            API_ENDPOINT,
+            json=make_google_v2_response(),
+            status=200,
+        )
+        tool.invoke(
+            {
+                "query": "rust web framework",
+                "location": "Austin, Texas, United States",
+                "uule": "w+CAIQICI",
+                "lr": "lang_en",
+                "cr": "countryUS",
+                "safe": "active",
+                "nfpr": True,
+                "filter": "0",
+                "time_period": "last_week",
+                "resolve_ai_overview": False,
+                "include_html": True,
+            }
+        )
+        body = json_mod.loads(responses.calls[0].request.body)
+        assert body["location"] == "Austin, Texas, United States"
+        assert body["uule"] == "w+CAIQICI"
+        assert body["lr"] == "lang_en"
+        assert body["cr"] == "countryUS"
+        assert body["safe"] == "active"
+        assert body["nfpr"] is True
+        assert body["filter"] == "0"
+        assert body["time_period"] == "last_week"
+        assert body["resolve_ai_overview"] is False
+        assert body["include_html"] is True
+
+    @responses.activate
+    def test_unset_serp_filters_are_not_sent(self, tool: ScavioSearch) -> None:
+        """Absent params must stay off the wire, nfpr included."""
+        import json as json_mod
+
+        responses.add(
+            responses.POST,
+            API_ENDPOINT,
+            json=make_google_v2_response(),
+            status=200,
+        )
+        tool.invoke({"query": "rust web framework"})
+        body = json_mod.loads(responses.calls[0].request.body)
+        for key in ("nfpr", "safe", "filter", "time_period", "include_html"):
+            assert key not in body
+
+    @responses.activate
+    def test_init_defaults_apply_when_the_call_omits_them(self) -> None:
+        import json as json_mod
+
+        tool = ScavioSearch(
+            scavio_api_key=MOCK_API_KEY, safe="active", time_period="last_day"
+        )
+        responses.add(
+            responses.POST,
+            API_ENDPOINT,
+            json=make_google_v2_response(),
+            status=200,
+        )
+        tool.invoke({"query": "rust", "time_period": "last_year"})
+        body = json_mod.loads(responses.calls[0].request.body)
+        assert body["safe"] == "active"
+        # The per-call value wins over the constructor default.
+        assert body["time_period"] == "last_year"
+
+    @responses.activate
+    def test_classic_only_filters_dropped_on_news(
+        self, tool: ScavioSearch
+    ) -> None:
+        """News has a narrower schema; SERP filters must not be forwarded."""
+        import json as json_mod
+
+        responses.add(
+            responses.POST,
+            NEWS_ENDPOINT,
+            json={"news_results": [{"title": "n1"}], "credits_used": 1},
+            status=200,
+        )
+        tool.invoke(
+            {
+                "query": "elections",
+                "search_type": "news",
+                "gl": "us",
+                "safe": "active",
+                "time_period": "last_week",
+                "lr": "lang_en",
+                "cr": "countryUS",
+                "filter": "0",
+                "nfpr": True,
+                "location": "Austin, Texas, United States",
+                "uule": "w+CAIQICI",
+                "resolve_ai_overview": True,
+                "include_html": True,
+            }
+        )
+        body = json_mod.loads(responses.calls[0].request.body)
+        assert body["gl"] == "us"
+        for key in (
+            "safe",
+            "time_period",
+            "lr",
+            "cr",
+            "filter",
+            "nfpr",
+            "location",
+            "uule",
+            "resolve_ai_overview",
+            "include_html",
+            "device",
+        ):
+            assert key not in body
+
 
 class TestForbiddenParams:
     def test_init_only_params_rejected_at_invocation(
@@ -247,6 +403,26 @@ class TestInputSchema:
         assert "language" in props
         assert "device" in props
         assert "page" in props
+
+    def test_every_v2_wire_param_is_agent_visible(self) -> None:
+        """A param the endpoint takes but the schema hides is unusable."""
+        tool = ScavioSearch(scavio_api_key=MOCK_API_KEY)
+        props = tool.get_input_schema().model_json_schema()["properties"]
+        assert set(V2_WIRE_PARAMS) <= set(props)
+
+    def test_enum_params_use_the_wire_values(self) -> None:
+        tool = ScavioSearch(scavio_api_key=MOCK_API_KEY)
+        schema = tool.get_input_schema().model_json_schema()
+        assert _enum_values(schema, "safe") == ["active"]
+        # filter is a string enum on the wire, not a number.
+        assert _enum_values(schema, "filter") == ["0", "1"]
+        assert _enum_values(schema, "time_period") == [
+            "last_hour",
+            "last_day",
+            "last_week",
+            "last_month",
+            "last_year",
+        ]
 
     def test_query_is_required(self) -> None:
         tool = ScavioSearch(scavio_api_key=MOCK_API_KEY)

@@ -6,11 +6,14 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 import responses
+from pydantic import ValidationError
 
 from langchain_scavio._utilities import SCAVIO_API_URL
 from langchain_scavio.scavio_amazon import (
     ScavioAmazonOffers,
+    ScavioAmazonOffersInput,
     ScavioAmazonProduct,
+    ScavioAmazonProductInput,
     ScavioAmazonSearch,
 )
 
@@ -136,7 +139,7 @@ class TestAmazonSearchRun:
     def test_deprecated_aliases_still_forwarded(
         self, amazon_search_tool: ScavioAmazonSearch
     ) -> None:
-        """domain/start_page are off the schema but must not be dropped."""
+        """domain/start_page are deprecated but must still reach the wire."""
         import json as json_mod
 
         responses.add(
@@ -208,6 +211,8 @@ class TestAmazonSearchInputSchema:
         assert "query" in props
         assert "country" in props
         assert "page" in props
+        assert "domain" in props
+        assert "start_page" in props
         assert not set(props) & set(RETIRED_PARAMS)
 
     def test_query_is_required(self) -> None:
@@ -325,14 +330,43 @@ class TestAmazonProductInputSchema:
         tool = ScavioAmazonProduct(scavio_api_key=MOCK_API_KEY)
         input_schema = tool.get_input_schema().model_json_schema()
         props = input_schema["properties"]
+        assert "asin" in props
         assert "query" in props
         assert "country" in props
+        assert "domain" in props
         assert not set(props) & set(RETIRED_PARAMS)
 
-    def test_query_is_required(self) -> None:
+    def test_asin_is_required(self) -> None:
         tool = ScavioAmazonProduct(scavio_api_key=MOCK_API_KEY)
         input_schema = tool.get_input_schema().model_json_schema()
-        assert "query" in input_schema.get("required", [])
+        assert "asin" in input_schema.get("required", [])
+        assert "query" not in input_schema.get("required", [])
+
+    def test_query_alias_satisfies_the_asin_requirement(self) -> None:
+        """Pre-3.4 callers pass query; validation must still accept that."""
+        parsed = ScavioAmazonProductInput.model_validate({"query": "B001234567"})
+        assert parsed.asin == "B001234567"
+
+    def test_neither_asin_nor_query_is_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            ScavioAmazonProductInput.model_validate({"country": "us"})
+
+    @responses.activate
+    def test_asin_field_forwarded_as_query(self) -> None:
+        import json as json_mod
+
+        tool = ScavioAmazonProduct(scavio_api_key=MOCK_API_KEY)
+        responses.add(
+            responses.POST,
+            PRODUCT_ENDPOINT,
+            json=make_amazon_product_response(),
+            status=200,
+        )
+        tool.invoke({"asin": "B001234567", "domain": "co.uk"})
+        body = json_mod.loads(responses.calls[0].request.body)
+        assert body["query"] == "B001234567"
+        assert body["domain"] == "co.uk"
+        assert "asin" not in body
 
 
 class TestAmazonOffers:
@@ -344,9 +378,15 @@ class TestAmazonOffers:
     def test_schema_has_expected_fields(self) -> None:
         tool = ScavioAmazonOffers(scavio_api_key=MOCK_API_KEY)
         props = tool.get_input_schema().model_json_schema()["properties"]
+        assert "asin" in props
         assert "query" in props
         assert "country" in props
+        assert "domain" in props
         assert not set(props) & set(RETIRED_PARAMS)
+
+    def test_offers_query_alias_satisfies_the_asin_requirement(self) -> None:
+        parsed = ScavioAmazonOffersInput.model_validate({"query": "B001234567"})
+        assert parsed.asin == "B001234567"
 
     @responses.activate
     def test_asin_forwarded_as_query(self) -> None:
