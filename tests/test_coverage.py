@@ -647,7 +647,7 @@ def test_kuaishou_is_priced_per_endpoint_not_flat() -> None:
 
 
 def test_kuaishou_is_never_called_kwai() -> None:
-    """TikHub does not serve kwai.com, so no surface may advertise Kwai."""
+    """Our upstream source does not serve kwai.com, so no surface may advertise Kwai."""
     for cls in ALL_TOOLS:
         if not cls.__name__.startswith("ScavioKuaishou"):
             continue

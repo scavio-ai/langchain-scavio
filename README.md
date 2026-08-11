@@ -1826,7 +1826,7 @@ own parameter, spelled exactly as the API takes it.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `share_link` | `str` | A kuaishou.com or v.kuaishou.com share link. kwai.com links are NOT supported -- TikHub does not serve Kwai international **(required)** |
+| `share_link` | `str` | A kuaishou.com or v.kuaishou.com share link. kwai.com links are NOT supported -- our upstream source does not serve Kwai international **(required)** |
 
 ### ScavioKuaishouVideo
 

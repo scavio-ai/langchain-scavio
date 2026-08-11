@@ -1026,7 +1026,7 @@ def tiktok_user_followings_tool() -> ScavioTikTokUserFollowings:
 # -- TikTok Shop response builders ------------------------------------------
 #
 # Every shape below is the NORMALIZED response the backend emits, taken from
-# running backend/src/lib/tikhub/tiktok-shop-normalize.ts over the recorded
+# running the backend's TikTok Shop normalizer over the recorded
 # fixtures in backend/tests/fixtures/tiktok-shop/ -- not from the contract
 # prose. Key names here are the key names the tools must read.
 

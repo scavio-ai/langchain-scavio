@@ -401,7 +401,7 @@ class ScavioKuaishouUserResolveInput(BaseModel):
     share_link: str = Field(
         description=(
             "A kuaishou.com or v.kuaishou.com share link. kwai.com links are NOT "
-            "supported -- TikHub does not serve Kwai international."
+            "supported -- our upstream source does not serve Kwai international."
         ),
     )
 
