@@ -4,7 +4,7 @@ Every Scavio API endpoint this package claims to support must be reachable
 through an exported tool class, and no tool may point at a retired endpoint.
 These assertions are deliberately exact: adding or removing a tool without
 updating this file is a test failure, not a silent drift. The path sets below
-are the whole public API surface as of 4.0 -- 32 platforms, 187 tool classes
+are the whole public API surface as of 4.0 -- 31 platforms plus Extract, 187 tool classes
 over 188 distinct endpoints (ScavioSearch alone covers three Google surfaces
 via search_type, and ScavioYouTubeMetadata is an alias of ScavioYouTubeVideo,
 so those two classes share /api/v1/youtube/video).

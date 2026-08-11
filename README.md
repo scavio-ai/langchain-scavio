@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-integration-blueviolet)](https://python.langchain.com/)
 
-**187 LangChain tools across 32 platforms** -- Google, YouTube, Amazon, Walmart, Target, eBay, Home Depot, Reddit, TikTok, TikTok Shop, Instagram, X (Twitter), Threads, Kuaishou, LinkedIn, Indeed, Glassdoor, Zillow, Redfin, Booking.com, Airbnb, Tripadvisor, Yelp, the Apple App Store, Google Play, SEC EDGAR, Companies House, G2, Capterra, Google Ads Transparency and the Meta Ad Library -- plus `ScavioExtract`, which reads **any** URL as Markdown, plain text or raw HTML. Structured JSON, one API key, no scraping or proxies.
+**187 LangChain tools across 31 platforms** -- Google, YouTube, Amazon, Walmart, Target, eBay, Home Depot, Reddit, TikTok, TikTok Shop, Instagram, X (Twitter), Threads, Kuaishou, LinkedIn, Indeed, Glassdoor, Zillow, Redfin, Booking.com, Airbnb, Tripadvisor, Yelp, the Apple App Store, Google Play, SEC EDGAR, Companies House, G2, Capterra, Google Ads Transparency and the Meta Ad Library -- plus `ScavioExtract`, which reads **any** URL as Markdown, plain text or raw HTML. Structured JSON, one API key, no scraping or proxies.
 
 ```bash
 pip install langchain-scavio
@@ -20,7 +20,7 @@ Scavio is a full [Tavily alternative](https://scavio.dev/alternatives/tavily) bu
 
 | | Scavio | Tavily | SerpAPI |
 |---|---|---|---|
-| **Platforms** | 32 (Google, retail, real estate, travel, jobs, app stores, filings, software reviews, ad transparency) | Google only | Google + others |
+| **Platforms** | 31 + Extract (Google, retail, real estate, travel, jobs, app stores, filings, software reviews, ad transparency) | Google only | Google + others |
 | **Tools** | 187 | 1 | 1 per wrapper |
 | **Read any URL** | Yes (`ScavioExtract`) | Yes | No |
 | **Knowledge graphs** | Yes | No | Partial |
@@ -65,7 +65,7 @@ eBay 3, Home Depot 3, Zillow 3, Redfin 3, Booking.com 3, Airbnb 3, Yelp 3,
 App Store 3, Google Play 3, G2 3, Capterra 3, Google Ads 3, Meta Ads 3, and
 `ScavioExtract` on its own.
 
-> **New in 4.0.** 96 tools -> 187, 10 platforms -> 32. Twenty-one new platforms
+> **New in 4.0.** 96 tools -> 187, 10 platforms -> 31 plus Extract. Twenty-one new platforms
 > (Threads, Kuaishou, eBay, Target, Home Depot, Zillow, Redfin, Booking.com,
 > Airbnb, Tripadvisor, Indeed, Glassdoor, Yelp, Apple App Store, Google Play,
 > SEC EDGAR, Companies House, G2, Capterra, Google Ads Transparency, Meta Ad
