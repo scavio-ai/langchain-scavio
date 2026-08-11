@@ -176,6 +176,28 @@ class TestWalmartSearchInputSchema:
         assert "min_price" in props
         assert "max_price" in props
         assert "fulfillment_speed" in props
+        # domain is the price-bearing param: com/ca cost 1 credit, com.mx costs 2.
+        assert "domain" in props
+        assert "page" in props
+
+    def test_retired_params_are_not_offered(self) -> None:
+        """device / delivery_zip / store_id were retired; sending them only
+        earns a warnings[] entry, so the agent must not see them."""
+        tool = ScavioWalmartSearch(scavio_api_key=MOCK_API_KEY)
+        props = tool.get_input_schema().model_json_schema()["properties"]
+        assert "device" not in props
+        assert "delivery_zip" not in props
+        assert "store_id" not in props
+
+    def test_sort_by_enum_matches_the_endpoint(self) -> None:
+        tool = ScavioWalmartSearch(scavio_api_key=MOCK_API_KEY)
+        field = tool.args_schema.model_fields["sort_by"]
+        rendered = str(field.annotation)
+        for value in ("best_match", "price_low", "price_high", "best_seller"):
+            assert value in rendered
+        # Added upstream after the 3.x schema was written.
+        assert "rating_high" in rendered
+        assert "new" in rendered
 
     def test_query_is_required(self) -> None:
         tool = ScavioWalmartSearch(scavio_api_key=MOCK_API_KEY)
@@ -293,7 +315,10 @@ class TestWalmartProductInputSchema:
         input_schema = tool.get_input_schema().model_json_schema()
         props = input_schema["properties"]
         assert "product_id" in props
-        assert "delivery_zip" in props
+        # The product endpoint takes ONLY product_id now: device, delivery_zip
+        # and store_id were retired, and domain is search/category-only because
+        # walmart.ca product pages cannot be fetched at all.
+        assert set(props) == {"product_id"}
 
     def test_product_id_is_required(self) -> None:
         tool = ScavioWalmartProduct(scavio_api_key=MOCK_API_KEY)

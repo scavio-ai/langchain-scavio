@@ -39,15 +39,23 @@
 | Feature | Tavily | Scavio |
 |---------|--------|--------|
 | Google web search | Yes | Yes |
-| Amazon product search | No | Yes (23 marketplaces) |
-| Walmart product search | No | Yes |
+| Read any URL | Yes | Yes (`ScavioExtract`, Markdown/text/HTML) |
+| Amazon product search | No | Yes (22 marketplaces) |
+| Walmart / Target / eBay / Home Depot | No | Yes |
 | YouTube search | No | Yes |
 | Reddit search | No | Yes |
+| Real estate (Zillow, Redfin) | No | Yes |
+| Travel (Booking.com, Airbnb, Tripadvisor) | No | Yes |
+| Jobs and employers (Indeed, Glassdoor) | No | Yes |
+| App stores (Apple, Google Play) | No | Yes |
+| Filings (SEC EDGAR, Companies House) | No | Yes |
+| Software reviews (G2, Capterra) | No | Yes |
+| Ad transparency (Google Ads, Meta Ad Library) | No | Yes |
 | Knowledge graphs | No | Yes |
 | People Also Ask | No | Yes |
 | AI Overviews | No | Yes |
 | Structured product data | No | Yes (price, rating, reviews, availability) |
-| Total tools | 1 | 9 |
+| Total tools | 1 | 187 |
 | Pricing | $0.01/search | $0.005/credit |
 | Async support | Yes | Yes |
 

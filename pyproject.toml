@@ -4,15 +4,15 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "langchain-scavio"
-version = "3.4"
-description = "LangChain integration for Scavio Search API -- real-time Google, YouTube, Amazon, Walmart, Reddit, TikTok, Instagram, X and LinkedIn data with knowledge graphs and structured results"
+version = "4.0"
+description = "LangChain integration for the Scavio API -- 187 tools for real-time Google, YouTube, Amazon, Walmart, Target, eBay, Home Depot, Reddit, TikTok, Instagram, X, Threads, Kuaishou, LinkedIn, Indeed, Glassdoor, Zillow, Redfin, Booking, Airbnb, Tripadvisor, Yelp, App Store, Google Play, SEC EDGAR, Companies House, G2, Capterra, Google Ads and Meta Ad Library data, plus a read-any-URL extract tool"
 authors = ["Scavio"]
 readme = "README.md"
 homepage = "https://scavio.dev"
 repository = "https://github.com/scavio-ai/langchain-scavio"
 documentation = "https://scavio.dev/docs/langchain"
 license = "MIT"
-keywords = ["langchain", "search", "ai", "agents", "web-search", "knowledge-graph", "tavily-alternative", "langgraph", "serp", "amazon-search", "walmart-search", "youtube-search", "reddit-search", "tiktok-search", "instagram-search", "twitter-search", "linkedin-search", "google-shopping", "google-flights", "google-trends", "ecommerce", "product-search"]
+keywords = ["langchain", "search", "ai", "agents", "web-search", "knowledge-graph", "tavily-alternative", "firecrawl-alternative", "langgraph", "serp", "web-scraping", "url-extract", "amazon-search", "walmart-search", "target-search", "ebay-search", "home-depot-search", "youtube-search", "reddit-search", "tiktok-search", "instagram-search", "twitter-search", "threads-search", "kuaishou-search", "linkedin-search", "indeed-jobs", "glassdoor-reviews", "zillow-api", "redfin-api", "booking-api", "airbnb-api", "tripadvisor-api", "yelp-api", "app-store-reviews", "google-play-reviews", "sec-edgar", "companies-house", "g2-reviews", "capterra-reviews", "google-ads-transparency", "meta-ad-library", "google-shopping", "google-flights", "google-trends", "ecommerce", "product-search"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
