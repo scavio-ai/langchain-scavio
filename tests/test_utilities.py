@@ -353,7 +353,7 @@ class TestRateLimiter:
     def test_max_requests_per_second_upper_bound(self) -> None:
         with pytest.raises(Exception):
             ScavioSearchAPIWrapper(
-                scavio_api_key=MOCK_API_KEY, max_requests_per_second=11
+                scavio_api_key=MOCK_API_KEY, max_requests_per_second=51
             )
 
     def test_max_requests_per_second_lower_bound(self) -> None:

@@ -75,10 +75,12 @@ class ScavioBaseAPIWrapper(BaseModel):
     max_requests_per_second: int = Field(
         default=1,
         ge=1,
-        le=10,
+        le=50,
         description=(
             "Maximum number of API requests per second. "
-            "Default is 1 (free plan). Enterprise plans support up to 10."
+            "Default is 1, which matches the free and pay-as-you-go plans. "
+            "Paid plans allow more (up to 50 on Growth); "
+            "Enterprise plans are unlimited."
         ),
     )
 
