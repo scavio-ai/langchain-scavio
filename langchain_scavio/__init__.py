@@ -38,7 +38,14 @@ from langchain_scavio.scavio_ebay import (
     ScavioEbaySearch,
     ScavioEbaySeller,
 )
-from langchain_scavio.scavio_extract import ScavioExtract
+from langchain_scavio.scavio_extract import (
+    ScavioExtract,
+    ScavioExtractBatch,
+    ScavioExtractBatchStatus,
+    ScavioExtractCrawl,
+    ScavioExtractCrawlStatus,
+    ScavioExtractMap,
+)
 from langchain_scavio.scavio_g2 import (
     ScavioG2Product,
     ScavioG2Reviews,
@@ -446,5 +453,10 @@ __all__ = [
     "ScavioMetaAdsAdvertiser",
     "ScavioMetaAdsAd",
     "ScavioExtract",
+    "ScavioExtractMap",
+    "ScavioExtractCrawl",
+    "ScavioExtractCrawlStatus",
+    "ScavioExtractBatch",
+    "ScavioExtractBatchStatus",
     "__version__",
 ]

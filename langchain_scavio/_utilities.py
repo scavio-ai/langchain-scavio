@@ -1966,3 +1966,202 @@ class ScavioExtractAPIWrapper(ScavioBaseAPIWrapper):
     def _build_url(self) -> str:
         base = self.api_base_url or SCAVIO_API_URL
         return f"{base}/api/v1/extract"
+
+
+# Extract: map, crawl and batch
+#
+# Map answers directly (HTTP 200). Crawl and batch start a background job
+# (HTTP 202) whose progress and page results are read back, free, from
+# GET /api/v1/extract/{crawl|batch}/{id}, paged by cursor.
+
+WEB_JOB_TERMINAL_STATUSES = frozenset({"completed", "failed", "cancelled"})
+WEB_JOB_POLL_INTERVAL = 3.0
+WEB_JOB_MAX_WAIT = 300
+
+
+class ScavioExtractMapAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/extract/map."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/extract/map"
+
+
+def _query_value(value: Any) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
+
+
+def _raise_for_status(status: int, text: str) -> None:
+    if status in (200, 202):
+        return
+    try:
+        error: Any = json.loads(text).get("error", "Unknown error")
+    except (ValueError, AttributeError):
+        error = text or "Unknown error"
+    if isinstance(error, dict):
+        error = error.get("message", "Unknown error")
+    if status == 429:
+        raise ValueError(
+            f"Rate limit exceeded: {error}. "
+            "Upgrade your plan at https://dashboard.scavio.dev/billing"
+        )
+    raise ValueError(f"Error {status}: {error}")
+
+
+class _ScavioExtractJobAPIWrapper(ScavioBaseAPIWrapper):
+    """Shared plumbing for the crawl and batch job endpoints.
+
+    ``start`` posts the job (HTTP 202), ``status`` reads one page of its
+    results, and ``wait`` polls the job until it finishes or the wait budget
+    runs out, then returns the latest status page.
+    """
+
+    _kind: str = ""
+
+    def _job_base(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/extract/{self._kind}"
+
+    def _build_url(self) -> str:
+        return self._job_base()
+
+    def _status_url(self, job_id: str) -> str:
+        return f"{self._job_base()}/{job_id}"
+
+    @staticmethod
+    def _clean(params: dict[str, Any]) -> dict[str, Any]:
+        return {k: v for k, v in params.items() if v is not None}
+
+    def _send(
+        self,
+        method: str,
+        url: str,
+        body: Optional[dict[str, Any]] = None,
+        query: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
+        self._rate_limiter.wait()
+        response = requests.request(
+            method,
+            url,
+            json=body,
+            params={k: _query_value(v) for k, v in (query or {}).items()},
+            headers=self._build_headers(),
+            timeout=30,
+        )
+        _raise_for_status(response.status_code, response.text)
+        return response.json()
+
+    async def _send_async(
+        self,
+        method: str,
+        url: str,
+        body: Optional[dict[str, Any]] = None,
+        query: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
+        await self._rate_limiter.wait_async()
+        async with aiohttp.ClientSession() as session:
+            async with session.request(
+                method,
+                url,
+                json=body,
+                params={k: _query_value(v) for k, v in (query or {}).items()},
+                headers=self._build_headers(),
+                timeout=aiohttp.ClientTimeout(total=30),
+            ) as response:
+                text = await response.text()
+                _raise_for_status(response.status, text)
+                return json.loads(text)
+
+    # -- start / status ----------------------------------------------------
+
+    def start(self, **params: Any) -> dict[str, Any]:
+        """Start the job. Returns the 202 body: ``{"data": {"id", ...}}``."""
+        return self._send("POST", self._job_base(), body=self._clean(params))
+
+    async def start_async(self, **params: Any) -> dict[str, Any]:
+        """Start the job (async)."""
+        return await self._send_async(
+            "POST", self._job_base(), body=self._clean(params)
+        )
+
+    def status(self, job_id: str, **query: Any) -> dict[str, Any]:
+        """Read the job's progress and one page of its results."""
+        return self._send("GET", self._status_url(job_id), query=self._clean(query))
+
+    async def status_async(self, job_id: str, **query: Any) -> dict[str, Any]:
+        """Read the job's progress and one page of its results (async)."""
+        return await self._send_async(
+            "GET", self._status_url(job_id), query=self._clean(query)
+        )
+
+    # -- wait --------------------------------------------------------------
+
+    @staticmethod
+    def _finished(payload: dict[str, Any]) -> bool:
+        data = payload.get("data") or {}
+        return data.get("status") in WEB_JOB_TERMINAL_STATUSES
+
+    def wait(
+        self, job_id: str, wait_seconds: float, **query: Any
+    ) -> dict[str, Any]:
+        """Poll until the job finishes or ``wait_seconds`` pass.
+
+        Progress polls skip page content; the final read uses ``query``.
+        """
+        deadline = time.monotonic() + max(0.0, min(wait_seconds, WEB_JOB_MAX_WAIT))
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            time.sleep(min(WEB_JOB_POLL_INTERVAL, remaining))
+            probe = self.status(job_id, limit=1, include_content=False)
+            if self._finished(probe):
+                break
+        return self.status(job_id, **query)
+
+    async def wait_async(
+        self, job_id: str, wait_seconds: float, **query: Any
+    ) -> dict[str, Any]:
+        """Poll until the job finishes or ``wait_seconds`` pass (async)."""
+        deadline = time.monotonic() + max(0.0, min(wait_seconds, WEB_JOB_MAX_WAIT))
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            await asyncio.sleep(min(WEB_JOB_POLL_INTERVAL, remaining))
+            probe = await self.status_async(job_id, limit=1, include_content=False)
+            if self._finished(probe):
+                break
+        return await self.status_async(job_id, **query)
+
+
+class ScavioExtractCrawlAPIWrapper(_ScavioExtractJobAPIWrapper):
+    """Wrapper for POST /api/v1/extract/crawl (start a crawl)."""
+
+    _kind: str = "crawl"
+
+
+class ScavioExtractCrawlStatusAPIWrapper(_ScavioExtractJobAPIWrapper):
+    """Wrapper for GET /api/v1/extract/crawl/{id} (crawl status and results)."""
+
+    _kind: str = "crawl"
+
+    def _build_url(self) -> str:
+        return self._status_url("{id}")
+
+
+class ScavioExtractBatchAPIWrapper(_ScavioExtractJobAPIWrapper):
+    """Wrapper for POST /api/v1/extract/batch (start a batch extract)."""
+
+    _kind: str = "batch"
+
+
+class ScavioExtractBatchStatusAPIWrapper(_ScavioExtractJobAPIWrapper):
+    """Wrapper for GET /api/v1/extract/batch/{id} (batch status and results)."""
+
+    _kind: str = "batch"
+
+    def _build_url(self) -> str:
+        return self._status_url("{id}")

@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-integration-blueviolet)](https://python.langchain.com/)
 
-**187 LangChain tools across 31 platforms** -- Google, YouTube, Amazon, Walmart, Target, eBay, Home Depot, Reddit, TikTok, TikTok Shop, Instagram, X (Twitter), Threads, Kuaishou, LinkedIn, Indeed, Glassdoor, Zillow, Redfin, Booking.com, Airbnb, Tripadvisor, Yelp, the Apple App Store, Google Play, SEC EDGAR, Companies House, G2, Capterra, Google Ads Transparency and the Meta Ad Library -- plus `ScavioExtract`, which reads **any** URL as Markdown, plain text or raw HTML. Structured JSON, one API key, no scraping or proxies.
+**192 LangChain tools across 31 platforms** -- Google, YouTube, Amazon, Walmart, Target, eBay, Home Depot, Reddit, TikTok, TikTok Shop, Instagram, X (Twitter), Threads, Kuaishou, LinkedIn, Indeed, Glassdoor, Zillow, Redfin, Booking.com, Airbnb, Tripadvisor, Yelp, the Apple App Store, Google Play, SEC EDGAR, Companies House, G2, Capterra, Google Ads Transparency and the Meta Ad Library -- plus the Extract family: `ScavioExtract` reads **any** URL as Markdown, plain text or raw HTML, and `ScavioExtractMap`, `ScavioExtractCrawl` and `ScavioExtractBatch` map a site's URLs, crawl a whole site, or extract a list of pages in one job. Structured JSON, one API key, no scraping or proxies.
 
 ```bash
 pip install langchain-scavio
@@ -21,7 +21,7 @@ Scavio is a full [Tavily alternative](https://scavio.dev/alternatives/tavily) bu
 | | Scavio | Tavily | SerpAPI |
 |---|---|---|---|
 | **Platforms** | 31 + Extract (Google, retail, real estate, travel, jobs, app stores, filings, software reviews, ad transparency) | Google only | Google + others |
-| **Tools** | 187 | 1 | 1 per wrapper |
+| **Tools** | 192 | 1 | 1 per wrapper |
 | **Read any URL** | Yes (`ScavioExtract`) | Yes | No |
 | **Knowledge graphs** | Yes | No | Partial |
 | **Product data** (price, rating, reviews) | Yes | No | No |
@@ -42,7 +42,8 @@ Scavio is a full [Tavily alternative](https://scavio.dev/alternatives/tavily) bu
 - **Competitive-intelligence agents** -- G2 and Capterra reviews with facets, plus Google Ads Transparency and the Meta Ad Library for what rivals are actually running
 - **Content research agents** -- YouTube trends + Reddit sentiment + Google news in a single workflow
 - **Social media agents** -- TikTok, Instagram, X, Threads and Kuaishou profile analytics, hashtag tracking and comment mining
-- **Read-anything agents** -- point `ScavioExtract` at any URL the other 186 tools do not cover and get clean Markdown back
+- **Read-anything agents** -- point `ScavioExtract` at any URL the other tools do not cover and get clean Markdown back
+- **Docs and site-ingestion agents** -- map a site's URLs, crawl it page by page, or batch-extract a URL list into Markdown for RAG with `ScavioExtractMap`, `ScavioExtractCrawl` and `ScavioExtractBatch`
 
 ## Quick Start
 
@@ -56,14 +57,21 @@ tool = ScavioSearch()
 result = tool.invoke({"query": "best python web frameworks 2026"})
 ```
 
-## All 187 Tools
+## All 192 Tools
 
 Per platform: YouTube 16, Kuaishou 14, Google 12, Instagram 12, Reddit 12,
 TikTok 11, X 11, LinkedIn 9, TikTok Shop 8, Walmart 7, SEC EDGAR 6, Threads 6,
 Target 4, Indeed 4, Glassdoor 4, Tripadvisor 4, Companies House 4, Amazon 3,
 eBay 3, Home Depot 3, Zillow 3, Redfin 3, Booking.com 3, Airbnb 3, Yelp 3,
 App Store 3, Google Play 3, G2 3, Capterra 3, Google Ads 3, Meta Ads 3, and
-`ScavioExtract` on its own.
+the Extract family 6 (extract, map, crawl, crawl status, batch, batch status).
+
+> **New in 4.2.** Five tools for whole sites: `ScavioExtractMap` lists a
+> site's page URLs, `ScavioExtractCrawl` crawls a site from one URL and
+> `ScavioExtractBatch` extracts a list of URLs in one job, each page returned
+> as Markdown, text or HTML. Crawl and batch run as background jobs; read them
+> back, free, with `ScavioExtractCrawlStatus` / `ScavioExtractBatchStatus`.
+> See [Map, crawl and batch](#map-crawl-and-batch).
 
 > **New in 4.0.** 96 tools -> 187, 10 platforms -> 31 plus Extract. Twenty-one new platforms
 > (Threads, Kuaishou, eBay, Target, Home Depot, Zillow, Redfin, Booking.com,
@@ -297,6 +305,11 @@ App Store 3, Google Play 3, G2 3, Capterra 3, Google Ads 3, Meta Ads 3, and
 | `ScavioMetaAdsAdvertiser` | Every ad a Facebook Page is running, cursor-paginated |
 | `ScavioMetaAdsAd` | One Meta ad in full by archive id |
 | `ScavioExtract` | Read ANY URL as raw HTML, readability Markdown or plain text |
+| `ScavioExtractMap` | List a site's page URLs from its sitemaps and start page |
+| `ScavioExtractCrawl` | Crawl a site from one URL; every page as Markdown, text or HTML |
+| `ScavioExtractCrawlStatus` | A crawl's progress and page results, cursor-paged (free) |
+| `ScavioExtractBatch` | Extract a list of URLs in one job |
+| `ScavioExtractBatchStatus` | A batch's progress and page results, cursor-paged (free) |
 
 ## Use with a LangChain Agent
 
@@ -335,7 +348,7 @@ response = agent.invoke({
 })
 ```
 
-With 187 tools available, hand a given agent only the ones its job needs -- a
+With 192 tools available, hand a given agent only the ones its job needs -- a
 price-comparison agent wants the retail tools, a recruiting agent wants Indeed,
 Glassdoor and LinkedIn. `ScavioExtract` is the useful catch-all: it reads any
 URL the other tools do not cover.
@@ -884,6 +897,63 @@ extract.invoke({"url": "https://example.com/spa", "mode": "advanced"})
 > timeout costs nothing. `http(s)` only; loopback, private, link-local and
 > metadata hosts are rejected with a 400.
 
+### Map, crawl and batch
+
+When one page is not enough. `ScavioExtractMap` answers in one call;
+`ScavioExtractCrawl` and `ScavioExtractBatch` start a background job, **wait up
+to `wait_seconds` (default 45, max 300)** for it to finish, and return the job's
+status with its first page of results either way. A job that is still `queued`
+or `running` when the wait ends keeps going: read the rest later with the
+matching status tool and `data.id`. That split keeps an agent turn bounded
+while a large crawl (up to 6 hours) runs on.
+
+```python
+from langchain_scavio import (
+    ScavioExtractBatch,
+    ScavioExtractCrawl,
+    ScavioExtractCrawlStatus,
+    ScavioExtractMap,
+)
+
+# Map: a site's URLs from its sitemaps and start page. 1 credit (normal mode).
+links = ScavioExtractMap().invoke({"url": "https://hono.dev/docs", "limit": 50})
+[link["url"] for link in links["data"]["links"]]
+
+# Crawl: same-site pages, breadth-first, within page / depth / path limits.
+job = ScavioExtractCrawl().invoke(
+    {
+        "url": "https://hono.dev/docs",
+        "max_pages": 25,
+        "include_paths": ["/docs/**"],
+        "format": "markdown",
+    }
+)
+job["data"]["status"]         # "completed", or "running" if the wait ran out
+job["data"]["results"]        # [{url, depth, status, content, credits, ...}]
+
+# Page through the rest (and through jobs that outlived the wait). Free.
+more = ScavioExtractCrawlStatus().invoke(
+    {"id": job["data"]["id"], "cursor": job["data"]["next_cursor"]}
+)
+
+# Batch: a list of URLs in one job, each extracted exactly like ScavioExtract.
+ScavioExtractBatch().invoke(
+    {"urls": ["https://example.com/", "https://hono.dev/docs/getting-started/basic"]}
+)
+```
+
+> **Pricing.** Map costs 1 credit in normal mode (advanced up to 2, ultra up to
+> 10, priced by what the call needed). Crawl and batch bill **per successful
+> page** at Extract's price for the mode -- normal and advanced 1 credit, ultra
+> 2 -- while failed and skipped pages are free; if your balance runs out, the
+> job stops cleanly with `stopped_reason: "insufficient_credits"`. Reading a job
+> is free. Crawl and map obey the site's robots.txt; results are kept for 3
+> days. Plan limits (pages per crawl / active jobs / URLs per batch): Free
+> 10/1/10, PAYG 100/1/50, Project 500/2/100, Bootstrap 2,000/3/500, Startup
+> 5,000/5/1,000, Growth 10,000/10/1,000. Webhooks, idempotency keys and
+> cancellation are available on the [REST API](https://scavio.dev/docs/extract)
+> but not exposed as agent tools.
+
 ### YouTube
 
 ```python
@@ -1325,7 +1395,7 @@ Most endpoints cost 1 credit. The exceptions:
 | `ScavioYouTubeSearch`, `ScavioYouTubeShorts`, `ScavioInstagramUserPosts`, `ScavioKuaishouVideo`, all `ScavioHomeDepot*`, all `ScavioIndeed*`, all `ScavioTripadvisor*`, all `ScavioYelp*`, all `ScavioGooglePlay*`, all `ScavioCapterra*`, all `ScavioThreads*` (by `user_id`) | 2 |
 | everything else | 1 |
 
-**Body-priced tools.** Four surfaces cost a different number of credits
+**Body-priced tools.** These surfaces cost a different number of credits
 depending on what you send, so no flat figure is correct for them:
 
 | Tool | Rule |
@@ -1333,6 +1403,9 @@ depending on what you send, so no flat figure is correct for them:
 | `ScavioWalmartSearch`, `ScavioWalmartCategory` | `domain=com` or `ca` -> 1 credit; `domain=com.mx` -> 2 |
 | `ScavioThreadsProfile`, `ScavioThreadsUserPosts`, `ScavioThreadsUserReplies` | `user_id` -> 2 credits; `username` -> 4 (the handle needs a second upstream lookup) |
 | `ScavioExtract` | `mode=normal` or `advanced` -> 1 credit; `mode=ultra` -> 2. Billed only on a successful extraction |
+| `ScavioExtractMap` | `mode=normal` -> 1 credit; `advanced` up to 2, `ultra` up to 10, priced by what the call needed |
+| `ScavioExtractCrawl`, `ScavioExtractBatch` | per successful page: `mode=normal` or `advanced` -> 1 credit, `ultra` -> 2. Failed and skipped pages are free |
+| `ScavioExtractCrawlStatus`, `ScavioExtractBatchStatus` | free |
 | `ScavioKuaishou*` | priced per endpoint: 1, 2, 10 or 40 -- see each tool's description |
 
 Every tool states its own cost in its `description`, so an agent can see the
@@ -2718,6 +2791,63 @@ own parameter, spelled exactly as the API takes it.
 | `format` | `html\|markdown\|text` | Output format: html is the raw page, markdown is a readability extraction, text is that markdown flattened to plain text. Default: markdown |
 | `mode` | `normal\|advanced\|ultra` | Fetch tier and THE PRICE-BEARING PARAMETER: normal and advanced cost 1 credit, ultra costs 2. Escalate only when a plain fetch comes back empty. Default: normal |
 
+### ScavioExtractMap
+
+`scavio_map_website` -> `POST /api/v1/extract/map`. Costs 1 credit in normal mode; advanced up to 2, ultra up to 10.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `url` | `str` | The site to map; a bare host is upgraded to https **(required)** |
+| `search` | `str` | Only URLs containing every word of this text (case-insensitive) |
+| `limit` | `int` | Maximum links, 1-5000. Default 1000 (plan caps: Free 500, PAYG 1,000, paid 5,000) |
+| `sitemap` | `include\|only\|skip` | `include` combines sitemaps with the start page's links (default); `only` sitemaps alone; `skip` page links alone |
+| `include_subdomains` | `bool` | Also return subdomain URLs. Default false |
+| `include_paths` / `exclude_paths` | `list[str]` | Path globs to keep / drop (max 20). `*` within a segment, `**` across segments |
+| `ignore_query_parameters` | `bool` | Treat URLs differing only by query string as one. Default true |
+| `mode` | `normal\|advanced\|ultra` | normal is the standard fetch, advanced renders JavaScript-built pages, ultra reaches the hardest pages |
+
+### ScavioExtractCrawl
+
+`scavio_crawl_website` -> `POST /api/v1/extract/crawl`, then polls `GET /api/v1/extract/crawl/{id}`. Billed per successful page: 1 credit (normal, advanced) or 2 (ultra).
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `url` | `str` | Where the crawl starts; only same-site pages are crawled **(required)** |
+| `max_pages` | `int` | Maximum pages, 1-10000. Default 100, capped by plan |
+| `max_depth` | `int` | Links away from the start page, 0-10. Default 3; 0 fetches only the start page |
+| `include_paths` / `exclude_paths` | `list[str]` | Path globs to crawl / skip (max 20) |
+| `allow_subdomains` | `bool` | Also crawl subdomains. Default false |
+| `ignore_query_parameters` | `bool` | Treat URLs differing only by query string as one page. Default true |
+| `sitemap` | `include\|skip\|only` | `include` also starts from the sitemap (default); `skip` links only; `only` sitemap pages without following links |
+| `format` | `html\|markdown\|text` | Format for each page. Default markdown |
+| `mode` | `normal\|advanced\|ultra` | Price-bearing fetch tier, as on Extract |
+| `wait_seconds` | `int` | Wait for the job to finish, 0-300. Default 45; 0 returns the job id at once |
+| `limit` | `int` | Results in the returned page, 1-100. Default 10 (the API's own default is 25) |
+| `include_content` | `bool` | false lists results without page content. Default true |
+
+### ScavioExtractCrawlStatus / ScavioExtractBatchStatus
+
+`scavio_crawl_status` -> `GET /api/v1/extract/crawl/{id}`; `scavio_batch_status` -> `GET /api/v1/extract/batch/{id}`. Free.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | `str` | The job id (`data.id`) **(required)** |
+| `cursor` | `str` | `next_cursor` from the previous response |
+| `limit` | `int` | Results per response, 1-100. Default 10 |
+| `status` | `succeeded\|failed\|skipped` | Only results with this status |
+| `include_content` | `bool` | false lists results without page content. Default true |
+
+### ScavioExtractBatch
+
+`scavio_batch_extract` -> `POST /api/v1/extract/batch`, then polls `GET /api/v1/extract/batch/{id}`. Billed per successful page: 1 credit (normal, advanced) or 2 (ultra).
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `urls` | `list[str]` | Pages to extract, duplicates removed. Plan caps: Free 10, PAYG 50, Project 100, Bootstrap 500, Startup and Growth 1,000 **(required)** |
+| `format` | `html\|markdown\|text` | Format for each page. Default markdown |
+| `mode` | `normal\|advanced\|ultra` | Price-bearing fetch tier, as on Extract |
+| `wait_seconds` / `limit` / `include_content` | | As on `ScavioExtractCrawl` |
+
 ## Error Handling
 
 - Empty results raise `ToolException` with actionable suggestions for the LLM
@@ -2727,7 +2857,7 @@ own parameter, spelled exactly as the API takes it.
 ## Architecture
 
 One `BaseTool` subclass per endpoint, each backed by an `APIWrapper` that owns
-a single URL. 187 tools over 188 distinct endpoints: `ScavioSearch` alone
+a single URL. 192 tools over 193 distinct endpoints: `ScavioSearch` alone
 covers three Google surfaces via `search_type`, and `ScavioYouTubeMetadata` is a
 deprecated alias of `ScavioYouTubeVideo`, so those two share one endpoint.
 
@@ -2765,7 +2895,8 @@ ScavioBaseAPIWrapper                    # Auth, headers, rate limit, sync/async 
   +-- Capterra     3 tools -> /api/v1/capterra/*
   +-- Google Ads   3 tools -> /api/v1/googleads/*
   +-- Meta Ads     3 tools -> /api/v1/meta-ads/*     (route key metaads, path meta-ads)
-  +-- Extract      1 tool  -> /api/v1/extract        (core, not a platform)
+  +-- Extract      6 tools -> /api/v1/extract*       (core, not a platform: extract,
+                                                      map, crawl + status, batch + status)
 ```
 
 Source layout: one module per platform -- `scavio_search.py` (Google),
@@ -2824,7 +2955,7 @@ MIT
 - Indeed and Glassdoor — job postings, employer profiles, review sentiment and salary bands
 - SEC EDGAR and Companies House — filings, XBRL facts, officers and the UK register
 - G2, Capterra, Google Ads Transparency and the Meta Ad Library — software reviews with facets, and the ads competitors are actually running
-- Extract — read any URL as Markdown, plain text or raw HTML
+- Extract — read any URL as Markdown, plain text or raw HTML; map a site's URLs, crawl a whole site, or batch-extract a URL list
 
 Every billable Scavio endpoint has a tool in this package.
 

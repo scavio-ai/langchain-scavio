@@ -4,10 +4,11 @@ Every Scavio API endpoint this package claims to support must be reachable
 through an exported tool class, and no tool may point at a retired endpoint.
 These assertions are deliberately exact: adding or removing a tool without
 updating this file is a test failure, not a silent drift. The path sets below
-are the whole public API surface as of 4.0 -- 31 platforms plus Extract, 187 tool classes
-over 188 distinct endpoints (ScavioSearch alone covers three Google surfaces
-via search_type, and ScavioYouTubeMetadata is an alias of ScavioYouTubeVideo,
-so those two classes share /api/v1/youtube/video).
+are the whole public API surface as of 4.2 -- 31 platforms plus the Extract
+family (extract, map, crawl, batch), 192 tool classes over 193 distinct
+endpoints (ScavioSearch alone covers three Google surfaces via search_type,
+and ScavioYouTubeMetadata is an alias of ScavioYouTubeVideo, so those two
+classes share /api/v1/youtube/video).
 """
 
 from __future__ import annotations
@@ -320,8 +321,17 @@ METAADS_PATHS = {
     "/api/v1/meta-ads/ad",
 }
 
-# Extract is a CORE endpoint, not a platform: it reads any URL.
-CORE_PATHS = {"/api/v1/extract"}
+# Extract is a CORE endpoint family, not a platform: extract reads any URL; map,
+# crawl and batch are its multi-page members. The {id} paths are the free job
+# status reads behind ScavioExtractCrawlStatus / ScavioExtractBatchStatus.
+CORE_PATHS = {
+    "/api/v1/extract",
+    "/api/v1/extract/map",
+    "/api/v1/extract/crawl",
+    "/api/v1/extract/crawl/{id}",
+    "/api/v1/extract/batch",
+    "/api/v1/extract/batch/{id}",
+}
 
 ALL_ENDPOINT_PATHS = (
     GOOGLE_V2_PATHS
@@ -431,11 +441,11 @@ EXPECTED_TOOL_COUNTS = {
     "G2": 3,
     "Capterra": 3,
     "Meta Ads": 3,
-    "Extract": 1,
+    "Extract": 6,
 }
 
-TOTAL_TOOL_CLASSES = 187
-TOTAL_ENDPOINTS = 188
+TOTAL_TOOL_CLASSES = 192
+TOTAL_ENDPOINTS = 193
 
 
 def _tool_classes() -> list[type[BaseTool]]:
