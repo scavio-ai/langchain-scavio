@@ -810,7 +810,7 @@ class ScavioYouTubeTranscript(BaseTool):  # type: ignore[override]
     """Fetch the transcript (captions) of a YouTube video.
 
     Returns the transcript as plain text or timed SRT subtitles. Note this
-    endpoint costs 8 credits per call.
+    endpoint costs 5 credits per call.
 
     Setup:
         .. code-block:: bash
@@ -835,7 +835,7 @@ class ScavioYouTubeTranscript(BaseTool):  # type: ignore[override]
     description: str = (
         "Fetch the transcript (captions) of a YouTube video. "
         "Returns plain text (format=text) or timed SRT subtitles (format=srt). "
-        "Costs 8 credits per call. "
+        "Costs 5 credits per call. "
         "Input should be a YouTube video ID or watch URL."
     )
     args_schema: Type[BaseModel] = ScavioYouTubeTranscriptInput

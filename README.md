@@ -157,7 +157,7 @@ the Extract family 6 (extract, map, crawl, crawl status, batch, batch status).
 | `ScavioYouTubeVideo` | Fetch full details for a YouTube video (chapters, captions) |
 | `ScavioYouTubeComments` | Fetch comments on a YouTube video with pagination |
 | `ScavioYouTubeCommentReplies` | Fetch replies to a specific YouTube comment |
-| `ScavioYouTubeTranscript` | 8 |
+| `ScavioYouTubeTranscript` | 5 |
 | `ScavioYouTubeRelated` | Fetch videos related to a YouTube video |
 | `ScavioYouTubeChannelSearch` | Search YouTube channels by name |
 | `ScavioYouTubeChannel` | Fetch channel details by ID, @handle, or URL |
@@ -989,7 +989,7 @@ result = video.invoke({"video_id": "dQw4w9WgXcQ"})  # video ID or watch URL
 comments = ScavioYouTubeComments(max_results=10)
 result = comments.invoke({"video_id": "dQw4w9WgXcQ"})
 
-# Transcript as plain text or timed SRT (8 credits per call)
+# Transcript as plain text or timed SRT (5 credits per call)
 transcript = ScavioYouTubeTranscript()
 result = transcript.invoke({"video_id": "dQw4w9WgXcQ", "format": "text"})
 
@@ -1389,8 +1389,8 @@ Most endpoints cost 1 credit. The exceptions:
 | `ScavioLinkedInJob` | 30 |
 | `ScavioKuaishouVideosBatch` | 40 |
 | `ScavioInstagram*` (all but `UserPosts`, `Post`, `CommentReplies`), `ScavioLinkedInPersonPosts`, `ScavioLinkedInCompanyPosts`, `ScavioLinkedInSearchJobs`, `ScavioLinkedInPostComments`, `ScavioKuaishouProfile`, `ScavioKuaishouSearch`, `ScavioKuaishouSearchVideos`, `ScavioKuaishouSearchUsers`, `ScavioKuaishouSearchLive` | 10 |
-| `ScavioYouTubeTranscript`, `ScavioInstagramPost`, `ScavioInstagramCommentReplies` | 8 |
-| `ScavioG2Search`, `ScavioG2Product`, `ScavioG2Reviews` | 5 |
+| `ScavioInstagramPost`, `ScavioInstagramCommentReplies` | 8 |
+| `ScavioYouTubeTranscript`, `ScavioG2Search`, `ScavioG2Product`, `ScavioG2Reviews` | 5 |
 | `ScavioYouTubeStreams` | 3 |
 | `ScavioYouTubeSearch`, `ScavioYouTubeShorts`, `ScavioInstagramUserPosts`, `ScavioKuaishouVideo`, all `ScavioHomeDepot*`, all `ScavioIndeed*`, all `ScavioTripadvisor*`, all `ScavioYelp*`, all `ScavioGooglePlay*`, all `ScavioCapterra*`, all `ScavioThreads*` (by `user_id`) | 2 |
 | everything else | 1 |
