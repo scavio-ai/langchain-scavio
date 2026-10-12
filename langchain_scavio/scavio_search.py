@@ -241,7 +241,7 @@ class ScavioSearchInput(BaseModel):
     resolve_ai_overview: Optional[bool] = Field(
         default=None,
         description=(
-            "Resolve a deferred AI Overview with a second upstream call "
+            "Resolve a deferred AI Overview with a second lookup "
             "(server default true, still 1 credit). Set false to skip it and "
             "answer faster when the AI Overview is not needed. Classic search "
             "only."

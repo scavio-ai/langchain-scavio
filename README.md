@@ -510,7 +510,7 @@ offers.invoke({"asin": "B08N5WRWNW"})             # every seller for that ASIN
 
 > **Targeting a marketplace:** `country` takes a two-letter code, not a domain. Supported: `us` (default), `gb` (the UK is `gb`, not `uk`), `ca`, `de`, `fr`, `es`, `it`, `jp`, `in`, `au`, `br`, `mx`, `nl`, `pl`, `se`, `sg`, `ae`, `sa`, `eg`, `cn`, `be`, `tr`. An unrecognised code falls back to `us`.
 
-> **Amazon changed in 3.0 (breaking).** The upstream provider moved and the request surface shrank. `sort_by`, `pages`, `category_id`, `merchant_id`, `language`, `currency`, `device`, `zip_code` and `autoselect_variant` are gone from all Amazon tools -- the marketplace ignores every one of them, so they are removed rather than kept as silent no-ops (`sort_by` was verified: all six sort values return the identical unordered set). `domain` and `start_page` are deprecated wire aliases: they still work and, since 3.4, are declared on the schemas so nothing the endpoint accepts is unreachable -- but prefer `country` and `page`, which win when both are given. Response fields were renamed too -- `url_image` is now `image`, `best_seller`/`is_amazons_choice` collapsed into `badge`, and `buybox` is gone (use `ScavioAmazonOffers`).
+> **Amazon changed in 3.0 (breaking).** The Amazon endpoint changed and the request surface shrank. `sort_by`, `pages`, `category_id`, `merchant_id`, `language`, `currency`, `device`, `zip_code` and `autoselect_variant` are gone from all Amazon tools -- the marketplace ignores every one of them, so they are removed rather than kept as silent no-ops (`sort_by` was verified: all six sort values return the identical unordered set). `domain` and `start_page` are deprecated wire aliases: they still work and, since 3.4, are declared on the schemas so nothing the endpoint accepts is unreachable -- but prefer `country` and `page`, which win when both are given. Response fields were renamed too -- `url_image` is now `image`, `best_seller`/`is_amazons_choice` collapsed into `badge`, and `buybox` is gone (use `ScavioAmazonOffers`).
 
 ### Walmart
 
@@ -670,8 +670,7 @@ ScavioTripadvisorReviews().invoke({
 ```python
 from langchain_scavio import ScavioYelpSearch, ScavioYelpBusiness, ScavioYelpReviews
 
-# `location` is effectively required: without it Yelp geolocates off our proxy
-# exit and the same request answers about a different metro run to run.
+# `location` is effectively required: without it Yelp picks a location itself and the same request can answer about a different metro run to run.
 ScavioYelpSearch().invoke({
     "term": "coffee", "location": "Austin, TX",
     "price": [1, 2], "open_now": True,
@@ -704,7 +703,7 @@ ScavioIndeedSearch().invoke({
 ScavioIndeedCompanyReviews().invoke({"company": "Stripe", "page": 2})
 
 # Glassdoor is LOOKUP-FIRST, and addressing reviews/salaries by employer_id
-# costs TWO upstream fetches. Pass back reviews_url / salaries_url from the
+# takes an extra lookup. Pass back reviews_url / salaries_url from the
 # company response as `url` to make it one.
 match = ScavioGlassdoorCompanies().invoke({"query": "Stripe"})
 company = ScavioGlassdoorCompany().invoke({"employer_id": "1699"})
@@ -853,7 +852,7 @@ from langchain_scavio import (
 )
 
 # Threads: user_id is the CHEAP path (2 credits). A username costs 4, because
-# the handle lookup needs a second upstream call.
+# the handle lookup needs a second lookup.
 ScavioThreadsProfile().invoke({"user_id": "63625256886"})
 ScavioThreadsUserPosts().invoke({"user_id": "63625256886", "cursor": "..."})
 # There is NO Threads content search -- people search is the only search.
@@ -1822,7 +1821,7 @@ own parameter, spelled exactly as the API takes it.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `username` | `str` | Threads handle without the @. Costs 2 extra credits because the handle has to be resolved with a second upstream call -- prefer user_id |
+| `username` | `str` | Threads handle without the @. Costs 2 extra credits because the handle has to be resolved with a second lookup -- prefer user_id |
 | `user_id` | `str` | Numeric Threads user id, e.g. 63625256886. This is the cheap path |
 
 ### ScavioThreadsUserPosts
@@ -1831,7 +1830,7 @@ own parameter, spelled exactly as the API takes it.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `username` | `str` | Threads handle without the @. Costs 2 extra credits because the handle has to be resolved with a second upstream call -- prefer user_id |
+| `username` | `str` | Threads handle without the @. Costs 2 extra credits because the handle has to be resolved with a second lookup -- prefer user_id |
 | `user_id` | `str` | Numeric Threads user id, e.g. 63625256886. This is the cheap path |
 | `cursor` | `str` | Pagination cursor taken from a previous response's next_cursor. Keep the other arguments identical across paginated calls |
 
@@ -1841,7 +1840,7 @@ own parameter, spelled exactly as the API takes it.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `username` | `str` | Threads handle without the @. Costs 2 extra credits because the handle has to be resolved with a second upstream call -- prefer user_id |
+| `username` | `str` | Threads handle without the @. Costs 2 extra credits because the handle has to be resolved with a second lookup -- prefer user_id |
 | `user_id` | `str` | Numeric Threads user id, e.g. 63625256886. This is the cheap path |
 | `cursor` | `str` | Pagination cursor taken from a previous response's next_cursor. Keep the other arguments identical across paginated calls |
 
@@ -2372,7 +2371,7 @@ own parameter, spelled exactly as the API takes it.
 |-----------|------|-------------|
 | `employer_id` | `str` | Glassdoor employer id as a STRING -- a JSON number is rejected. Accepts 1699, E1699 or IE1699 |
 | `company` | `str` | Company name. COSMETIC only: the profile resolves on employer_id alone, it is ignored entirely when url is set, and it does not satisfy the required-identifier rule |
-| `url` | `str` | Pass back reviews_url from the company endpoint to skip the resolve fetch -- addressing this endpoint by employer_id costs two upstream fetches |
+| `url` | `str` | Pass back reviews_url from the company endpoint to skip the resolve fetch -- addressing this endpoint by employer_id takes an extra lookup |
 | `category` | `career_development\|compensation\|culture\|diversity_and_inclusion\|management\|work_life_balance` | Review category filter. Closed set: Glassdoor IGNORES an unknown value and returns the unfiltered set under a 200 |
 | `employment_status` | `full_time\|part_time\|contract\|intern` | Reviewer employment status filter. Closed set for the same reason as category |
 
@@ -2394,7 +2393,7 @@ own parameter, spelled exactly as the API takes it.
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `term` | `str` | What to look for, e.g. 'coffee' or a business name |
-| `location` | `str` | City, neighbourhood or address. Effectively required: without it Yelp geolocates off the proxy exit and the same request answers about a different metro run to run |
+| `location` | `str` | City, neighbourhood or address. Effectively required: without it Yelp picks a location itself and the same request can answer about a different metro run to run |
 | `page` | `int` | Result page, 1-based. Yelp fixes the page size at 10 |
 | `sort` | `recommended\|rating\|review_count` | Sort order. Closed set: Yelp IGNORES an unrecognised value and serves default ranking under a billed 200. Default: recommended |
 | `price` | `list[int]` | Price bands to include, 1 (cheapest) to 4 (priciest) |

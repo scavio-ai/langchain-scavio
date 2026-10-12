@@ -62,8 +62,7 @@ class ScavioYelpSearchInput(BaseModel):
     location: Optional[str] = Field(
         default=None,
         description=(
-            "City, neighbourhood or address. Effectively required: without it Yelp "
-            "geolocates off the proxy exit and the same request answers about a "
+            "City, neighbourhood or address. Effectively required: without it Yelp picks a location itself and the same request can answer about a "
             "different metro run to run."
         ),
     )

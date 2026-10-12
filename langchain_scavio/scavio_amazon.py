@@ -1,6 +1,6 @@
 """Scavio Amazon tools for LangChain agents.
 
-The Amazon API moved to a new upstream provider in 2026-07 and the request
+The Amazon API changed in 2026-07 and the request
 surface shrank hard. These params are gone and are NOT accepted here any more:
 ``sort_by``, ``pages``, ``category_id``, ``merchant_id``, ``language``,
 ``currency``, ``device``, ``zip_code`` and ``autoselect_variant``.

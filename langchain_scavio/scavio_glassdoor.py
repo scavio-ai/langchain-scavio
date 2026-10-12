@@ -323,7 +323,7 @@ class ScavioGlassdoorReviewsInput(BaseModel):
         default=None,
         description=(
             "Pass back reviews_url from the company endpoint to skip the resolve fetch "
-            "-- addressing this endpoint by employer_id costs two upstream fetches."
+            "-- addressing this endpoint by employer_id takes an extra lookup."
         ),
     )
 

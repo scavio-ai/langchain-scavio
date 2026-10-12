@@ -59,7 +59,7 @@ class ScavioThreadsProfileInput(BaseModel):
         default=None,
         description=(
             "Threads handle without the @. Costs 2 extra credits because the handle "
-            "has to be resolved with a second upstream call -- prefer user_id."
+            "has to be resolved with a second lookup -- prefer user_id."
         ),
     )
 
@@ -181,7 +181,7 @@ class ScavioThreadsUserPostsInput(BaseModel):
         default=None,
         description=(
             "Threads handle without the @. Costs 2 extra credits because the handle "
-            "has to be resolved with a second upstream call -- prefer user_id."
+            "has to be resolved with a second lookup -- prefer user_id."
         ),
     )
 
@@ -317,7 +317,7 @@ class ScavioThreadsUserRepliesInput(BaseModel):
         default=None,
         description=(
             "Threads handle without the @. Costs 2 extra credits because the handle "
-            "has to be resolved with a second upstream call -- prefer user_id."
+            "has to be resolved with a second lookup -- prefer user_id."
         ),
     )
 
