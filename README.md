@@ -1249,9 +1249,12 @@ result["data"]["suggestions"]                # plain strings, no volume or score
 
 ### Instagram
 
-Instagram is priced per endpoint, not flat: 10 credits by default, 8 for
-`ScavioInstagramPost` and `ScavioInstagramCommentReplies`, and 2 for
-`ScavioInstagramUserPosts`.
+Instagram is priced per endpoint, not flat: 1 credit for `ScavioInstagramProfile`,
+`ScavioInstagramUserReels` and `ScavioInstagramTaggedPosts` (reels and tagged cost 2
+the first time a username is looked up), 2 for every other Instagram tool, and 8 for
+`ScavioInstagramSearchUsers` / `ScavioInstagramSearchHashtags` called with a `cursor`.
+Any Instagram request can cost up to 10 when it needs extra work; `credits_used` in
+the response is the exact charge.
 
 ```python
 from langchain_scavio import (

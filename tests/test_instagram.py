@@ -34,12 +34,12 @@ BASE = "https://api.scavio.dev/api/v1/instagram"
 
 
 def _envelope(data: Any) -> dict[str, Any]:
-    # Instagram endpoints cost 8 credits, except user posts which costs 2.
+    # Most Instagram endpoints cost 2 credits; profile, reels and tagged cost 1.
     return {
         "data": data,
         "response_time": 300,
-        "credits_used": 8,
-        "credits_remaining": 992,
+        "credits_used": 2,
+        "credits_remaining": 998,
     }
 
 
