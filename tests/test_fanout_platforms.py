@@ -387,6 +387,18 @@ FANOUT_ENDPOINTS: list[tuple[str, str, str, dict[str, Any], tuple[str, ...]]] = 
         ),
     ),
     (
+        "ScavioTargetAvailability",
+        "ScavioTargetAvailabilityAPIWrapper",
+        "/api/v1/target/availability",
+        {"tcin": "85978609", "zip": "79407"},
+        (
+            "tcin",
+            "zip",
+            "radius",
+            "store_id",
+        ),
+    ),
+    (
         "ScavioHomeDepotSearch",
         "ScavioHomeDepotSearchAPIWrapper",
         "/api/v1/homedepot/search",

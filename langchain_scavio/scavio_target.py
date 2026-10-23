@@ -17,6 +17,7 @@ from langchain_core.tools import BaseTool, ToolException
 from pydantic import BaseModel, ConfigDict, Field
 
 from langchain_scavio._utilities import (
+    ScavioTargetAvailabilityAPIWrapper,
     ScavioTargetCategoryAPIWrapper,
     ScavioTargetProductAPIWrapper,
     ScavioTargetReviewsAPIWrapper,
@@ -96,7 +97,7 @@ class ScavioTargetSearchInput(BaseModel):
         default=None,
         description=(
             "Numeric Target store id. Unlike Walmart this is a real request parameter: "
-            "it decides prices and availability. Default: 3991."
+            "it decides prices only (in-store stock comes from ScavioTargetAvailability). Default: 3991."
         ),
     )
 
@@ -282,7 +283,7 @@ class ScavioTargetCategoryInput(BaseModel):
         default=None,
         description=(
             "Numeric Target store id. Unlike Walmart this is a real request parameter: "
-            "it decides prices and availability. Default: 3991."
+            "it decides prices only (in-store stock comes from ScavioTargetAvailability). Default: 3991."
         ),
     )
 
@@ -437,7 +438,7 @@ class ScavioTargetProductInput(BaseModel):
         default=None,
         description=(
             "Numeric Target store id. Unlike Walmart this is a real request parameter: "
-            "it decides prices and availability. Default: 3991."
+            "it decides prices only (in-store stock comes from ScavioTargetAvailability). Default: 3991."
         ),
     )
 
@@ -567,7 +568,7 @@ class ScavioTargetReviewsInput(BaseModel):
         default=None,
         description=(
             "Numeric Target store id. Unlike Walmart this is a real request parameter: "
-            "it decides prices and availability. Default: 3991."
+            "it decides prices only (in-store stock comes from ScavioTargetAvailability). Default: 3991."
         ),
     )
 
@@ -667,5 +668,138 @@ class ScavioTargetReviews(BaseTool):  # type: ignore[override]
             raise ToolException(
                 f"No Target reviews found for '{identifier}'. Try broadening the query "
                 "or removing filters."
+            )
+        return raw
+
+
+# --------------------------------------------------------------------------
+# ScavioTargetAvailability
+# --------------------------------------------------------------------------
+
+
+class ScavioTargetAvailabilityInput(BaseModel):
+    """Input schema for the ScavioTargetAvailability tool."""
+
+    model_config = ConfigDict(extra="allow")
+
+    tcin: str = Field(
+        description="Target catalog item number (TCIN).",
+    )
+
+    zip: str = Field(
+        description="5-digit US ZIP code to search around.",
+    )
+
+    radius: Optional[int] = Field(
+        default=None,
+        description="Search radius in miles, 1-100. Default: 25. At most 20 stores.",
+    )
+
+    store_id: Optional[str] = Field(
+        default=None,
+        description="Return only this Target store. It must be within radius of zip.",
+    )
+
+
+class ScavioTargetAvailability(BaseTool):  # type: ignore[override]
+    """Target: in-store stock for a product at every Target store near a ZIP:
+    units available, in-store, pickup, curbside and ship-to-store status.
+
+    Costs 1 credit per call.
+
+    Setup:
+        .. code-block:: bash
+
+            pip install langchain-scavio
+            export SCAVIO_API_KEY="sk_live_..."
+
+    Instantiate:
+        .. code-block:: python
+
+            from langchain_scavio import ScavioTargetAvailability
+
+            tool = ScavioTargetAvailability()
+
+    Invoke directly:
+        .. code-block:: python
+
+            result = tool.invoke({"tcin": "85978609", "zip": "79407"})
+    """
+
+    name: str = "scavio_target_availability"
+    description: str = (
+        "Target: in-store stock for a Target product at every store near a ZIP: "
+        "units available, in-store, pickup, curbside and ship-to-store status, "
+        "distance, address and hours. Costs 1 credit per call."
+    )
+    args_schema: Type[BaseModel] = ScavioTargetAvailabilityInput
+    handle_tool_error: bool = True
+
+    api_wrapper: ScavioTargetAvailabilityAPIWrapper = Field(
+        default_factory=ScavioTargetAvailabilityAPIWrapper  # type: ignore[arg-type]
+    )
+
+    def __init__(self, **kwargs: Any) -> None:
+        api_kwargs = _forward_api_kwargs(kwargs)
+        if api_kwargs and "api_wrapper" not in kwargs:
+            kwargs["api_wrapper"] = ScavioTargetAvailabilityAPIWrapper(**api_kwargs)
+        super().__init__(**kwargs)
+
+    def _run(
+        self,
+        tcin: str,
+        zip: str,
+        radius: Optional[int] = None,
+        store_id: Optional[str] = None,
+        *,
+        run_manager: Optional[CallbackManagerForToolRun] = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Call POST /api/v1/target/availability (synchronously)."""
+        try:
+            raw = self.api_wrapper.raw_results(
+                tcin=tcin,
+                zip=zip,
+                radius=radius,
+                store_id=store_id,
+            )
+            return self._process_response(raw, _first_identifier(tcin))
+        except ToolException:
+            raise
+        except Exception as e:
+            return {"error": str(e)}
+
+    async def _arun(
+        self,
+        tcin: str,
+        zip: str,
+        radius: Optional[int] = None,
+        store_id: Optional[str] = None,
+        *,
+        run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Call POST /api/v1/target/availability (asynchronously)."""
+        try:
+            raw = await self.api_wrapper.raw_results_async(
+                tcin=tcin,
+                zip=zip,
+                radius=radius,
+                store_id=store_id,
+            )
+            return self._process_response(raw, _first_identifier(tcin))
+        except ToolException:
+            raise
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _process_response(
+        self, raw: dict[str, Any], identifier: str
+    ) -> dict[str, Any]:
+        """Raise ToolException when the API returned no usable data."""
+        if not raw.get("data"):
+            raise ToolException(
+                f"No Target availability found for '{identifier}'. Verify the TCIN "
+                "and ZIP you passed."
             )
         return raw

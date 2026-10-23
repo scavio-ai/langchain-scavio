@@ -4,8 +4,8 @@ Every Scavio API endpoint this package claims to support must be reachable
 through an exported tool class, and no tool may point at a retired endpoint.
 These assertions are deliberately exact: adding or removing a tool without
 updating this file is a test failure, not a silent drift. The path sets below
-are the whole public API surface as of 4.2 -- 31 platforms plus the Extract
-family (extract, map, crawl, batch), 192 tool classes over 193 distinct
+are the whole public API surface as of 4.3 -- 31 platforms plus the Extract
+family (extract, map, crawl, batch), 193 tool classes over 194 distinct
 endpoints (ScavioSearch alone covers three Google surfaces via search_type,
 and ScavioYouTubeMetadata is an alias of ScavioYouTubeVideo, so those two
 classes share /api/v1/youtube/video).
@@ -210,6 +210,7 @@ TARGET_PATHS = {
     "/api/v1/target/category",
     "/api/v1/target/product",
     "/api/v1/target/reviews",
+    "/api/v1/target/availability",
 }
 
 HOMEDEPOT_PATHS = {
@@ -415,7 +416,7 @@ EXPECTED_TOOL_COUNTS = {
     "Google Ads": 3,
     "Amazon": 3,
     "Walmart": 7,
-    "Target": 4,
+    "Target": 5,
     "eBay": 3,
     "Home Depot": 3,
     "YouTube": 16,
@@ -444,8 +445,8 @@ EXPECTED_TOOL_COUNTS = {
     "Extract": 6,
 }
 
-TOTAL_TOOL_CLASSES = 192
-TOTAL_ENDPOINTS = 193
+TOTAL_TOOL_CLASSES = 193
+TOTAL_ENDPOINTS = 194
 
 
 def _tool_classes() -> list[type[BaseTool]]:

@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-integration-blueviolet)](https://python.langchain.com/)
 
-**192 LangChain tools across 31 platforms** -- Google, YouTube, Amazon, Walmart, Target, eBay, Home Depot, Reddit, TikTok, TikTok Shop, Instagram, X (Twitter), Threads, Kuaishou, LinkedIn, Indeed, Glassdoor, Zillow, Redfin, Booking.com, Airbnb, Tripadvisor, Yelp, the Apple App Store, Google Play, SEC EDGAR, Companies House, G2, Capterra, Google Ads Transparency and the Meta Ad Library -- plus the Extract family: `ScavioExtract` reads **any** URL as Markdown, plain text or raw HTML, and `ScavioExtractMap`, `ScavioExtractCrawl` and `ScavioExtractBatch` map a site's URLs, crawl a whole site, or extract a list of pages in one job. Structured JSON, one API key, no scraping or proxies.
+**193 LangChain tools across 31 platforms** -- Google, YouTube, Amazon, Walmart, Target, eBay, Home Depot, Reddit, TikTok, TikTok Shop, Instagram, X (Twitter), Threads, Kuaishou, LinkedIn, Indeed, Glassdoor, Zillow, Redfin, Booking.com, Airbnb, Tripadvisor, Yelp, the Apple App Store, Google Play, SEC EDGAR, Companies House, G2, Capterra, Google Ads Transparency and the Meta Ad Library -- plus the Extract family: `ScavioExtract` reads **any** URL as Markdown, plain text or raw HTML, and `ScavioExtractMap`, `ScavioExtractCrawl` and `ScavioExtractBatch` map a site's URLs, crawl a whole site, or extract a list of pages in one job. Structured JSON, one API key, no scraping or proxies.
 
 ```bash
 pip install langchain-scavio
@@ -21,7 +21,7 @@ Scavio is a full [Tavily alternative](https://scavio.dev/alternatives/tavily) bu
 | | Scavio | Tavily | SerpAPI |
 |---|---|---|---|
 | **Platforms** | 31 + Extract (Google, retail, real estate, travel, jobs, app stores, filings, software reviews, ad transparency) | Google only | Google + others |
-| **Tools** | 192 | 1 | 1 per wrapper |
+| **Tools** | 193 | 1 | 1 per wrapper |
 | **Read any URL** | Yes (`ScavioExtract`) | Yes | No |
 | **Knowledge graphs** | Yes | No | Partial |
 | **Product data** (price, rating, reviews) | Yes | No | No |
@@ -57,11 +57,11 @@ tool = ScavioSearch()
 result = tool.invoke({"query": "best python web frameworks 2026"})
 ```
 
-## All 192 Tools
+## All 193 Tools
 
 Per platform: YouTube 16, Kuaishou 14, Google 12, Instagram 12, Reddit 12,
 TikTok 11, X 11, LinkedIn 9, TikTok Shop 8, Walmart 7, SEC EDGAR 6, Threads 6,
-Target 4, Indeed 4, Glassdoor 4, Tripadvisor 4, Companies House 4, Amazon 3,
+Target 5, Indeed 4, Glassdoor 4, Tripadvisor 4, Companies House 4, Amazon 3,
 eBay 3, Home Depot 3, Zillow 3, Redfin 3, Booking.com 3, Airbnb 3, Yelp 3,
 App Store 3, Google Play 3, G2 3, Capterra 3, Google Ads 3, Meta Ads 3, and
 the Extract family 6 (extract, map, crawl, crawl status, batch, batch status).
@@ -140,10 +140,11 @@ the Extract family 6 (extract, map, crawl, crawl status, batch, batch status).
 | `ScavioWalmartOffers` | Walmart buy-box seller for a product (not the full offer list) |
 | `ScavioWalmartSeller` | Walmart marketplace seller storefront and Pro Seller badge |
 | `ScavioWalmartSellerProducts` | A Walmart seller's catalog, ~40 server-rendered items |
-| `ScavioTargetSearch` | Search Target with per-store prices and availability |
+| `ScavioTargetSearch` | Search Target with per-store prices |
 | `ScavioTargetCategory` | Products in a Target category, same shape as search |
 | `ScavioTargetProduct` | Target product detail by TCIN, with variants and fulfillment |
 | `ScavioTargetReviews` | Target reviews, 8 bodies max, with per-attribute averages |
+| `ScavioTargetAvailability` | In-store stock for a Target product at every store near a ZIP |
 | `ScavioEbaySearch` | Search eBay live or SOLD listings, filters and 60/120/240 per page |
 | `ScavioEbayProduct` | One eBay listing in full, including auction state |
 | `ScavioEbaySeller` | eBay seller profile card (a profile, not a catalogue) |
@@ -348,7 +349,7 @@ response = agent.invoke({
 })
 ```
 
-With 192 tools available, hand a given agent only the ones its job needs -- a
+With 193 tools available, hand a given agent only the ones its job needs -- a
 price-comparison agent wants the retail tools, a recruiting agent wants Indeed,
 Glassdoor and LinkedIn. `ScavioExtract` is the useful catch-all: it reads any
 URL the other tools do not cover.
@@ -2038,7 +2039,7 @@ own parameter, spelled exactly as the API takes it.
 | `page` | `int` | Result page number, 1-based |
 | `count` | `int` | Products per page. Target rejects anything above 28 outright. Default: 24 |
 | `sort` | `relevance\|featured\|price_low\|price_high\|rating_high\|best_seller\|newest` | Sort order for the results. Default: relevance |
-| `store_id` | `str` | Numeric Target store id. Unlike Walmart this is a real request parameter: it decides prices and availability. Default: 3991 |
+| `store_id` | `str` | Numeric Target store id. Unlike Walmart this is a real request parameter: it decides prices only (in-store stock comes from ScavioTargetAvailability). Default: 3991 |
 
 ### ScavioTargetCategory
 
@@ -2050,7 +2051,7 @@ own parameter, spelled exactly as the API takes it.
 | `page` | `int` | Result page number, 1-based |
 | `count` | `int` | Products per page. Target rejects anything above 28 outright. Default: 24 |
 | `sort` | `relevance\|featured\|price_low\|price_high\|rating_high\|best_seller\|newest` | Sort order for the results. Default: relevance |
-| `store_id` | `str` | Numeric Target store id. Unlike Walmart this is a real request parameter: it decides prices and availability. Default: 3991 |
+| `store_id` | `str` | Numeric Target store id. Unlike Walmart this is a real request parameter: it decides prices only (in-store stock comes from ScavioTargetAvailability). Default: 3991 |
 
 ### ScavioTargetProduct
 
@@ -2059,7 +2060,7 @@ own parameter, spelled exactly as the API takes it.
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `tcin` | `str` | Target catalog item number. A child TCIN is answered by its variation parent, with the child present under variants **(required)** |
-| `store_id` | `str` | Numeric Target store id. Unlike Walmart this is a real request parameter: it decides prices and availability. Default: 3991 |
+| `store_id` | `str` | Numeric Target store id. Unlike Walmart this is a real request parameter: it decides prices only (in-store stock comes from ScavioTargetAvailability). Default: 3991 |
 
 ### ScavioTargetReviews
 
@@ -2069,7 +2070,18 @@ own parameter, spelled exactly as the API takes it.
 |-----------|------|-------------|
 | `tcin` | `str` | Target catalog item number. A child TCIN is answered by its variation parent, with the child present under variants **(required)** |
 | `limit` | `int` | TRIMS the returned bodies only. Target publishes 8 reviews anonymously and offers no paging, so this cannot fetch more |
-| `store_id` | `str` | Numeric Target store id. Unlike Walmart this is a real request parameter: it decides prices and availability. Default: 3991 |
+| `store_id` | `str` | Numeric Target store id. Unlike Walmart this is a real request parameter: it decides prices only (in-store stock comes from ScavioTargetAvailability). Default: 3991 |
+
+### ScavioTargetAvailability
+
+`scavio_target_availability` -> `POST /api/v1/target/availability`. Costs 1 credit per call.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `tcin` | `str` | Target catalog item number (TCIN) **(required)** |
+| `zip` | `str` | 5-digit US ZIP code to search around **(required)** |
+| `radius` | `int` | Search radius in miles, 1-100. Default: 25. At most 20 stores |
+| `store_id` | `str` | Return only this Target store. It must be within radius of zip |
 
 ### ScavioHomeDepotSearch
 
@@ -2859,7 +2871,7 @@ own parameter, spelled exactly as the API takes it.
 ## Architecture
 
 One `BaseTool` subclass per endpoint, each backed by an `APIWrapper` that owns
-a single URL. 192 tools over 193 distinct endpoints: `ScavioSearch` alone
+a single URL. 193 tools over 194 distinct endpoints: `ScavioSearch` alone
 covers three Google surfaces via `search_type`, and `ScavioYouTubeMetadata` is a
 deprecated alias of `ScavioYouTubeVideo`, so those two share one endpoint.
 

@@ -166,6 +166,7 @@ from langchain_scavio.scavio_sec import (
     ScavioSECSearch,
 )
 from langchain_scavio.scavio_target import (
+    ScavioTargetAvailability,
     ScavioTargetCategory,
     ScavioTargetProduct,
     ScavioTargetReviews,
@@ -292,6 +293,7 @@ __all__ = [
     "ScavioTargetCategory",
     "ScavioTargetProduct",
     "ScavioTargetReviews",
+    "ScavioTargetAvailability",
     "ScavioEbaySearch",
     "ScavioEbayProduct",
     "ScavioEbaySeller",

@@ -1442,6 +1442,14 @@ class ScavioTargetReviewsAPIWrapper(ScavioBaseAPIWrapper):
         return f"{base}/api/v1/target/reviews"
 
 
+class ScavioTargetAvailabilityAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/target/availability."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/target/availability"
+
+
 # Home Depot
 
 
