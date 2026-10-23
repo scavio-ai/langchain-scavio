@@ -97,7 +97,8 @@ class ScavioTargetSearchInput(BaseModel):
         default=None,
         description=(
             "Numeric Target store id. Unlike Walmart this is a real request parameter: "
-            "it decides prices only (in-store stock comes from ScavioTargetAvailability). Default: 3991."
+            "it decides prices only (in-store stock comes from "
+            "ScavioTargetAvailability). Default: 3991."
         ),
     )
 
@@ -283,7 +284,8 @@ class ScavioTargetCategoryInput(BaseModel):
         default=None,
         description=(
             "Numeric Target store id. Unlike Walmart this is a real request parameter: "
-            "it decides prices only (in-store stock comes from ScavioTargetAvailability). Default: 3991."
+            "it decides prices only (in-store stock comes from "
+            "ScavioTargetAvailability). Default: 3991."
         ),
     )
 
@@ -438,7 +440,8 @@ class ScavioTargetProductInput(BaseModel):
         default=None,
         description=(
             "Numeric Target store id. Unlike Walmart this is a real request parameter: "
-            "it decides prices only (in-store stock comes from ScavioTargetAvailability). Default: 3991."
+            "it decides prices only (in-store stock comes from "
+            "ScavioTargetAvailability). Default: 3991."
         ),
     )
 
@@ -568,7 +571,8 @@ class ScavioTargetReviewsInput(BaseModel):
         default=None,
         description=(
             "Numeric Target store id. Unlike Walmart this is a real request parameter: "
-            "it decides prices only (in-store stock comes from ScavioTargetAvailability). Default: 3991."
+            "it decides prices only (in-store stock comes from "
+            "ScavioTargetAvailability). Default: 3991."
         ),
     )
 
