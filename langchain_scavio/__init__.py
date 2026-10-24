@@ -67,6 +67,11 @@ from langchain_scavio.scavio_google_play import (
     ScavioGooglePlayReviews,
     ScavioGooglePlaySearch,
 )
+from langchain_scavio.scavio_heb import (
+    ScavioHebProduct,
+    ScavioHebSearch,
+    ScavioHebStores,
+)
 from langchain_scavio.scavio_home_depot import (
     ScavioHomeDepotProduct,
     ScavioHomeDepotReviews,
@@ -91,6 +96,10 @@ from langchain_scavio.scavio_instagram import (
     ScavioInstagramUserFollowings,
     ScavioInstagramUserPosts,
     ScavioInstagramUserReels,
+)
+from langchain_scavio.scavio_kroger import (
+    ScavioKrogerProduct,
+    ScavioKrogerSearch,
 )
 from langchain_scavio.scavio_kuaishou import (
     ScavioKuaishouCommentReplies,
@@ -297,9 +306,14 @@ __all__ = [
     "ScavioEbaySearch",
     "ScavioEbayProduct",
     "ScavioEbaySeller",
+    "ScavioHebSearch",
+    "ScavioHebProduct",
+    "ScavioHebStores",
     "ScavioHomeDepotSearch",
     "ScavioHomeDepotProduct",
     "ScavioHomeDepotReviews",
+    "ScavioKrogerSearch",
+    "ScavioKrogerProduct",
     "ScavioYouTubeSearch",
     "ScavioYouTubeShorts",
     "ScavioYouTubeSuggestions",

@@ -1450,6 +1450,52 @@ class ScavioTargetAvailabilityAPIWrapper(ScavioBaseAPIWrapper):
         return f"{base}/api/v1/target/availability"
 
 
+# HEB
+
+
+class ScavioHebSearchAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/heb/search."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/heb/search"
+
+
+class ScavioHebProductAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/heb/product."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/heb/product"
+
+
+class ScavioHebStoresAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/heb/stores."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/heb/stores"
+
+
+# Kroger
+
+
+class ScavioKrogerSearchAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/kroger/search."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/kroger/search"
+
+
+class ScavioKrogerProductAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/kroger/product."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/kroger/product"
+
+
 # Home Depot
 
 

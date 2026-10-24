@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![LangChain](https://img.shields.io/badge/LangChain-integration-blueviolet)](https://python.langchain.com/)
 
-**193 LangChain tools across 31 platforms** -- Google, YouTube, Amazon, Walmart, Target, eBay, Home Depot, Reddit, TikTok, TikTok Shop, Instagram, X (Twitter), Threads, Kuaishou, LinkedIn, Indeed, Glassdoor, Zillow, Redfin, Booking.com, Airbnb, Tripadvisor, Yelp, the Apple App Store, Google Play, SEC EDGAR, Companies House, G2, Capterra, Google Ads Transparency and the Meta Ad Library -- plus the Extract family: `ScavioExtract` reads **any** URL as Markdown, plain text or raw HTML, and `ScavioExtractMap`, `ScavioExtractCrawl` and `ScavioExtractBatch` map a site's URLs, crawl a whole site, or extract a list of pages in one job. Structured JSON, one API key, no scraping or proxies.
+**198 LangChain tools across 33 platforms** -- Google, YouTube, Amazon, Walmart, HEB, Kroger, Target, eBay, Home Depot, Reddit, TikTok, TikTok Shop, Instagram, X (Twitter), Threads, Kuaishou, LinkedIn, Indeed, Glassdoor, Zillow, Redfin, Booking.com, Airbnb, Tripadvisor, Yelp, the Apple App Store, Google Play, SEC EDGAR, Companies House, G2, Capterra, Google Ads Transparency and the Meta Ad Library -- plus the Extract family: `ScavioExtract` reads **any** URL as Markdown, plain text or raw HTML, and `ScavioExtractMap`, `ScavioExtractCrawl` and `ScavioExtractBatch` map a site's URLs, crawl a whole site, or extract a list of pages in one job. Structured JSON, one API key, no scraping or proxies.
 
 ```bash
 pip install langchain-scavio
@@ -31,7 +31,7 @@ Scavio is a full [Tavily alternative](https://scavio.dev/alternatives/tavily) bu
 
 ## What Can You Build?
 
-- **Shopping agents** -- Amazon, Walmart, Target, eBay and Home Depot in one basket-comparison loop, including eBay *sold* prices
+- **Shopping agents** -- Amazon, Walmart, HEB, Kroger, Target, eBay and Home Depot in one basket-comparison loop, including eBay *sold* prices
 - **Product research agents** -- Google reviews + Amazon listings + YouTube reviews + Reddit opinions in one query
 - **Real-estate agents** -- Zillow and Redfin listings, price history, Zestimates, market stats and agent reviews
 - **Travel agents** -- Booking.com stays priced for real dates, Airbnb listings and review bodies, Tripadvisor rankings, Google Flights and Hotels
@@ -148,6 +148,11 @@ the Extract family 6 (extract, map, crawl, crawl status, batch, batch status).
 | `ScavioEbaySearch` | Search eBay live or SOLD listings, filters and 60/120/240 per page |
 | `ScavioEbayProduct` | One eBay listing in full, including auction state |
 | `ScavioEbaySeller` | eBay seller profile card (a profile, not a catalogue) |
+| `ScavioHebSearch` | Search HEB grocery products: prices, UPC, stock, EBT/SNAP |
+| `ScavioHebProduct` | Full HEB product: nutrition, ingredients, coupons |
+| `ScavioHebStores` | Find HEB stores near a ZIP or city |
+| `ScavioKrogerSearch` | Search Kroger grocery products: prices, stock, dietary |
+| `ScavioKrogerProduct` | Full Kroger product: nutrition, allergens, rating |
 | `ScavioHomeDepotSearch` | Search Home Depot, 12 products per page (fixed) |
 | `ScavioHomeDepotProduct` | Home Depot item detail with the full spec table |
 | `ScavioHomeDepotReviews` | Home Depot review bodies, 30 per page |
