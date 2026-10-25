@@ -101,6 +101,10 @@ from langchain_scavio.scavio_kroger import (
     ScavioKrogerProduct,
     ScavioKrogerSearch,
 )
+from langchain_scavio.scavio_decathlon import (
+    ScavioDecathlonProduct,
+    ScavioDecathlonSearch,
+)
 from langchain_scavio.scavio_kuaishou import (
     ScavioKuaishouCommentReplies,
     ScavioKuaishouProfile,
@@ -314,6 +318,8 @@ __all__ = [
     "ScavioHomeDepotReviews",
     "ScavioKrogerSearch",
     "ScavioKrogerProduct",
+    "ScavioDecathlonSearch",
+    "ScavioDecathlonProduct",
     "ScavioYouTubeSearch",
     "ScavioYouTubeShorts",
     "ScavioYouTubeSuggestions",

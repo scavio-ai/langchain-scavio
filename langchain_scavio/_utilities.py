@@ -1496,6 +1496,25 @@ class ScavioKrogerProductAPIWrapper(ScavioBaseAPIWrapper):
         return f"{base}/api/v1/kroger/product"
 
 
+# Decathlon
+
+
+class ScavioDecathlonSearchAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/decathlon/search."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/decathlon/search"
+
+
+class ScavioDecathlonProductAPIWrapper(ScavioBaseAPIWrapper):
+    """Wrapper for the Scavio endpoint POST /api/v1/decathlon/product."""
+
+    def _build_url(self) -> str:
+        base = self.api_base_url or SCAVIO_API_URL
+        return f"{base}/api/v1/decathlon/product"
+
+
 # Home Depot
 
 
