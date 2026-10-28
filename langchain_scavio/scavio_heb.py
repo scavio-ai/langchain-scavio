@@ -63,9 +63,10 @@ class ScavioHebSearchInput(BaseModel):
     store_id: Optional[str] = Field(
         default=None,
         description=(
-            "HEB store number from ScavioHebStores (store_number), e.g. '441'. Prices, stock, "
-            "aisle location and assortment come from that store; the store used is echoed in "
-            "data.store {store_id, name}. US only. Omit for HEB's default store."
+            "HEB store number from ScavioHebStores (store_number), e.g. '441'. "
+            "Prices, stock, aisle location and assortment come from that store; "
+            "the store used is echoed in data.store {store_id, name}. US only. "
+            "Omit for HEB's default store."
         ),
     )
 
@@ -99,7 +100,8 @@ class ScavioHebSearch(BaseTool):  # type: ignore[override]
         "HEB: Search grocery products by keyword. Returns price (cents), list price, "
         "sale status, unit price, size, UPC, stock, EBT/SNAP eligibility, category, "
         "aisle location and product URL. Pass store_id (store_number from "
-        "scavio_heb_stores) for one store's prices, stock and assortment. Costs 2 credits."
+        "scavio_heb_stores) for one store's prices, stock and assortment. "
+        "Costs 2 credits."
     )
     args_schema: Type[BaseModel] = ScavioHebSearchInput
     handle_tool_error: bool = True
@@ -190,14 +192,18 @@ class ScavioHebProductInput(BaseModel):
     )
     slug: Optional[str] = Field(
         default=None,
-        description="Product slug (readable part of the URL). Required with product_id unless store_id is set.",
+        description=(
+            "Product slug (readable part of the URL). Required with product_id "
+            "unless store_id is set."
+        ),
     )
     store_id: Optional[str] = Field(
         default=None,
         description=(
-            "HEB store number from ScavioHebStores (store_number), e.g. '441'. Prices, stock, "
-            "aisle location and assortment come from that store; the store used is echoed in "
-            "data.store {store_id, name}. US only. Omit for HEB's default store."
+            "HEB store number from ScavioHebStores (store_number), e.g. '441'. "
+            "Prices, stock, aisle location and assortment come from that store; "
+            "the store used is echoed in data.store {store_id, name}. US only. "
+            "Omit for HEB's default store."
         ),
     )
 
