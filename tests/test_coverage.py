@@ -5,7 +5,7 @@ through an exported tool class, and no tool may point at a retired endpoint.
 These assertions are deliberately exact: adding or removing a tool without
 updating this file is a test failure, not a silent drift. The path sets below
 are the whole public API surface as of 4.3 -- 31 platforms plus the Extract
-family (extract, map, crawl, batch), 193 tool classes over 194 distinct
+family (extract, map, crawl, batch), 200 tool classes over 201 distinct
 endpoints (ScavioSearch alone covers three Google surfaces via search_type,
 and ScavioYouTubeMetadata is an alias of ScavioYouTubeVideo, so those two
 classes share /api/v1/youtube/video).
@@ -213,6 +213,22 @@ TARGET_PATHS = {
     "/api/v1/target/availability",
 }
 
+HEB_PATHS = {
+    "/api/v1/heb/search",
+    "/api/v1/heb/product",
+    "/api/v1/heb/stores",
+}
+
+KROGER_PATHS = {
+    "/api/v1/kroger/search",
+    "/api/v1/kroger/product",
+}
+
+DECATHLON_PATHS = {
+    "/api/v1/decathlon/search",
+    "/api/v1/decathlon/product",
+}
+
 HOMEDEPOT_PATHS = {
     "/api/v1/homedepot/search",
     "/api/v1/homedepot/product",
@@ -349,6 +365,9 @@ ALL_ENDPOINT_PATHS = (
     | KUAISHOU_PATHS
     | EBAY_PATHS
     | TARGET_PATHS
+    | HEB_PATHS
+    | KROGER_PATHS
+    | DECATHLON_PATHS
     | HOMEDEPOT_PATHS
     | ZILLOW_PATHS
     | BOOKING_PATHS
@@ -380,6 +399,9 @@ FAMILY_PREFIXES = [
     ("ScavioAmazon", "Amazon"),
     ("ScavioWalmart", "Walmart"),
     ("ScavioTarget", "Target"),
+    ("ScavioHeb", "HEB"),
+    ("ScavioKroger", "Kroger"),
+    ("ScavioDecathlon", "Decathlon"),
     ("ScavioEbay", "eBay"),
     ("ScavioHomeDepot", "Home Depot"),
     ("ScavioYouTube", "YouTube"),
@@ -417,6 +439,9 @@ EXPECTED_TOOL_COUNTS = {
     "Amazon": 3,
     "Walmart": 7,
     "Target": 5,
+    "HEB": 3,
+    "Kroger": 2,
+    "Decathlon": 2,
     "eBay": 3,
     "Home Depot": 3,
     "YouTube": 16,
@@ -445,8 +470,8 @@ EXPECTED_TOOL_COUNTS = {
     "Extract": 6,
 }
 
-TOTAL_TOOL_CLASSES = 193
-TOTAL_ENDPOINTS = 194
+TOTAL_TOOL_CLASSES = 200
+TOTAL_ENDPOINTS = 201
 
 
 def _tool_classes() -> list[type[BaseTool]]:
@@ -521,6 +546,9 @@ def test_declared_endpoint_count() -> None:
         ("kuaishou", KUAISHOU_PATHS),
         ("ebay", EBAY_PATHS),
         ("target", TARGET_PATHS),
+        ("heb", HEB_PATHS),
+        ("kroger", KROGER_PATHS),
+        ("decathlon", DECATHLON_PATHS),
         ("homedepot", HOMEDEPOT_PATHS),
         ("zillow", ZILLOW_PATHS),
         ("booking", BOOKING_PATHS),

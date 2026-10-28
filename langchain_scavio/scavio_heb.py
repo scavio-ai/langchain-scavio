@@ -58,7 +58,15 @@ class ScavioHebSearchInput(BaseModel):
     )
     page_size: Optional[int] = Field(
         default=None,
-        description="Results per page, max 60. Default 30.",
+        description="Results per page, 1-60. Defaults to 60.",
+    )
+    store_id: Optional[str] = Field(
+        default=None,
+        description=(
+            "HEB store number from ScavioHebStores (store_number), e.g. '441'. Prices, stock, "
+            "aisle location and assortment come from that store; the store used is echoed in "
+            "data.store {store_id, name}. US only. Omit for HEB's default store."
+        ),
     )
 
 
@@ -90,7 +98,8 @@ class ScavioHebSearch(BaseTool):  # type: ignore[override]
     description: str = (
         "HEB: Search grocery products by keyword. Returns price (cents), list price, "
         "sale status, unit price, size, UPC, stock, EBT/SNAP eligibility, category, "
-        "aisle location and product URL. Costs 2 credits."
+        "aisle location and product URL. Pass store_id (store_number from "
+        "scavio_heb_stores) for one store's prices, stock and assortment. Costs 2 credits."
     )
     args_schema: Type[BaseModel] = ScavioHebSearchInput
     handle_tool_error: bool = True
@@ -110,13 +119,14 @@ class ScavioHebSearch(BaseTool):  # type: ignore[override]
         query: str,
         page: Optional[int] = None,
         page_size: Optional[int] = None,
+        store_id: Optional[str] = None,
         *,
         run_manager: Optional[CallbackManagerForToolRun] = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         try:
             raw = self.api_wrapper.raw_results(
-                query=query, page=page, page_size=page_size,
+                query=query, page=page, page_size=page_size, store_id=store_id,
             )
             return self._process_response(raw, _first_identifier(query))
         except ToolException:
@@ -129,13 +139,14 @@ class ScavioHebSearch(BaseTool):  # type: ignore[override]
         query: str,
         page: Optional[int] = None,
         page_size: Optional[int] = None,
+        store_id: Optional[str] = None,
         *,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         try:
             raw = await self.api_wrapper.raw_results_async(
-                query=query, page=page, page_size=page_size,
+                query=query, page=page, page_size=page_size, store_id=store_id,
             )
             return self._process_response(raw, _first_identifier(query))
         except ToolException:
@@ -172,11 +183,22 @@ class ScavioHebProductInput(BaseModel):
     )
     product_id: Optional[str] = Field(
         default=None,
-        description="HEB product id (numeric id at the end of a product URL). Requires slug.",
+        description=(
+            "HEB product id (numeric id at the end of a product URL). Needs slug, "
+            "unless store_id is set (then product_id alone works)."
+        ),
     )
     slug: Optional[str] = Field(
         default=None,
-        description="Product slug (readable part of the URL). Required with product_id.",
+        description="Product slug (readable part of the URL). Required with product_id unless store_id is set.",
+    )
+    store_id: Optional[str] = Field(
+        default=None,
+        description=(
+            "HEB store number from ScavioHebStores (store_number), e.g. '441'. Prices, stock, "
+            "aisle location and assortment come from that store; the store used is echoed in "
+            "data.store {store_id, name}. US only. Omit for HEB's default store."
+        ),
     )
 
 
@@ -203,7 +225,9 @@ class ScavioHebProduct(BaseTool):  # type: ignore[override]
     description: str = (
         "HEB: Full product detail: nutrition facts, ingredients, description, images, "
         "similar products, coupons, EBT/SNAP eligibility, breadcrumbs, aisle. "
-        "Pass product_url or slug + product_id. Costs 2 credits."
+        "Pass product_url or slug + product_id; with store_id (store_number from "
+        "scavio_heb_stores) product_id alone works and price, stock and aisle are for "
+        "that store. Costs 2 credits."
     )
     args_schema: Type[BaseModel] = ScavioHebProductInput
     handle_tool_error: bool = True
@@ -223,6 +247,7 @@ class ScavioHebProduct(BaseTool):  # type: ignore[override]
         product_url: Optional[str] = None,
         product_id: Optional[str] = None,
         slug: Optional[str] = None,
+        store_id: Optional[str] = None,
         *,
         run_manager: Optional[CallbackManagerForToolRun] = None,
         **kwargs: Any,
@@ -230,6 +255,7 @@ class ScavioHebProduct(BaseTool):  # type: ignore[override]
         try:
             raw = self.api_wrapper.raw_results(
                 product_url=product_url, product_id=product_id, slug=slug,
+                store_id=store_id,
             )
             return self._process_response(
                 raw, _first_identifier(product_url, product_id)
@@ -244,6 +270,7 @@ class ScavioHebProduct(BaseTool):  # type: ignore[override]
         product_url: Optional[str] = None,
         product_id: Optional[str] = None,
         slug: Optional[str] = None,
+        store_id: Optional[str] = None,
         *,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
         **kwargs: Any,
@@ -251,6 +278,7 @@ class ScavioHebProduct(BaseTool):  # type: ignore[override]
         try:
             raw = await self.api_wrapper.raw_results_async(
                 product_url=product_url, product_id=product_id, slug=slug,
+                store_id=store_id,
             )
             return self._process_response(
                 raw, _first_identifier(product_url, product_id)
