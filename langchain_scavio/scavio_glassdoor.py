@@ -64,7 +64,7 @@ class ScavioGlassdoorCompanies(BaseTool):  # type: ignore[override]
     """Glassdoor: START HERE. Search Glassdoor by company NAME and resolve it to the
     employer_id every other endpoint needs.
 
-    Costs 1 credit per call.
+    Costs 2 credits per call.
 
     Setup:
         .. code-block:: bash
@@ -88,7 +88,7 @@ class ScavioGlassdoorCompanies(BaseTool):  # type: ignore[override]
     name: str = "scavio_glassdoor_companies"
     description: str = (
         "Glassdoor: START HERE. Search Glassdoor by company NAME and resolve it to the "
-        "employer_id every other endpoint needs. Costs 1 credit per call."
+        "employer_id every other endpoint needs. Costs 2 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioGlassdoorCompaniesInput
     handle_tool_error: bool = True
@@ -192,7 +192,7 @@ class ScavioGlassdoorCompany(BaseTool):  # type: ignore[override]
     size/revenue bands, awards, five server-rendered reviews, plus reviews_url /
     salaries_url.
 
-    Costs 1 credit per call.
+    Costs 2 credits per call.
 
     Setup:
         .. code-block:: bash
@@ -217,7 +217,7 @@ class ScavioGlassdoorCompany(BaseTool):  # type: ignore[override]
     description: str = (
         "Glassdoor: Glassdoor employer profile: ratings, star distribution, CEO "
         "approval, size/revenue bands, awards, five server-rendered reviews, plus "
-        "reviews_url / salaries_url. Costs 1 credit per call."
+        "reviews_url / salaries_url. Costs 2 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioGlassdoorCompanyInput
     handle_tool_error: bool = True
@@ -362,7 +362,7 @@ class ScavioGlassdoorReviews(BaseTool):  # type: ignore[override]
     advice, employer response -- plus complete rating statistics and per-job-title
     review counts.
 
-    Costs 1 credit per call.
+    Costs 2 credits per call.
 
     Setup:
         .. code-block:: bash
@@ -387,7 +387,7 @@ class ScavioGlassdoorReviews(BaseTool):  # type: ignore[override]
     description: str = (
         "Glassdoor: Up to THREE full Glassdoor reviews with per-axis scores, pros, "
         "cons, advice, employer response -- plus complete rating statistics and "
-        "per-job-title review counts. Costs 1 credit per call."
+        "per-job-title review counts. Costs 2 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioGlassdoorReviewsInput
     handle_tool_error: bool = True
@@ -540,7 +540,7 @@ class ScavioGlassdoorSalaries(BaseTool):  # type: ignore[override]
     """Glassdoor: Glassdoor salaries by job title: base-pay and total-pay percentiles
     P10-P90 with medians, sample counts, currency, pay period, last-reported date.
 
-    Costs 1 credit per call.
+    Costs 2 credits per call.
 
     Pagination: page -- 10 job titles per page; page_count on the response is how
     many exist.
@@ -569,7 +569,7 @@ class ScavioGlassdoorSalaries(BaseTool):  # type: ignore[override]
         "Glassdoor: Glassdoor salaries by job title: base-pay and total-pay "
         "percentiles P10-P90 with medians, sample counts, currency, pay period, "
         "last-reported date. Pagination: page -- 10 job titles per page; page_count on "
-        "the response is how many exist. Costs 1 credit per call."
+        "the response is how many exist. Costs 2 credits per call."
     )
     args_schema: Type[BaseModel] = ScavioGlassdoorSalariesInput
     handle_tool_error: bool = True

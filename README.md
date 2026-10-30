@@ -2364,7 +2364,7 @@ own parameter, spelled exactly as the API takes it.
 
 ### ScavioGlassdoorCompanies
 
-`scavio_glassdoor_companies` -> `POST /api/v1/glassdoor/companies`. Costs 1 credit per call.
+`scavio_glassdoor_companies` -> `POST /api/v1/glassdoor/companies`. Costs 2 credits per call.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -2372,7 +2372,7 @@ own parameter, spelled exactly as the API takes it.
 
 ### ScavioGlassdoorCompany
 
-`scavio_glassdoor_company` -> `POST /api/v1/glassdoor/company`. Costs 1 credit per call.
+`scavio_glassdoor_company` -> `POST /api/v1/glassdoor/company`. Costs 2 credits per call.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -2382,7 +2382,7 @@ own parameter, spelled exactly as the API takes it.
 
 ### ScavioGlassdoorReviews
 
-`scavio_glassdoor_reviews` -> `POST /api/v1/glassdoor/reviews`. Costs 1 credit per call.
+`scavio_glassdoor_reviews` -> `POST /api/v1/glassdoor/reviews`. Costs 2 credits per call.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -2394,7 +2394,7 @@ own parameter, spelled exactly as the API takes it.
 
 ### ScavioGlassdoorSalaries
 
-`scavio_glassdoor_salaries` -> `POST /api/v1/glassdoor/salaries`. Costs 1 credit per call.
+`scavio_glassdoor_salaries` -> `POST /api/v1/glassdoor/salaries`. Costs 2 credits per call.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
