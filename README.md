@@ -1400,7 +1400,7 @@ Most endpoints cost 1 credit. The exceptions:
 | `ScavioInstagramPost`, `ScavioInstagramCommentReplies` | 8 |
 | `ScavioYouTubeTranscript`, `ScavioG2Search`, `ScavioG2Product`, `ScavioG2Reviews` | 5 |
 | `ScavioYouTubeStreams` | 3 |
-| `ScavioYouTubeSearch`, `ScavioYouTubeShorts`, `ScavioInstagramUserPosts`, `ScavioKuaishouVideo`, all `ScavioHomeDepot*`, all `ScavioIndeed*`, all `ScavioTripadvisor*`, all `ScavioYelp*`, all `ScavioGooglePlay*`, all `ScavioCapterra*`, all `ScavioThreads*` (by `user_id`) | 2 |
+| `ScavioYouTubeSearch`, `ScavioYouTubeShorts`, `ScavioInstagramUserPosts`, `ScavioKuaishouVideo`, all `ScavioHomeDepot*`, all `ScavioIndeed*`, all `ScavioTripadvisor*`, all `ScavioYelp*`, all `ScavioGooglePlay*`, all `ScavioCapterra*`, all `ScavioGlassdoor*`, all `ScavioThreads*` (by `user_id`) | 2 |
 | everything else | 1 |
 
 **Body-priced tools.** These surfaces cost a different number of credits
